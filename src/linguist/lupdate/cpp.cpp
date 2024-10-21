@@ -2112,6 +2112,12 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
             // If it is an enum class then ignore
             if (yyTok == Tok_class)
                 yyTok = getToken();
+
+            // Allow the parser to flexibly detect and ignore 
+            // colons in front of the typed enums.
+            yyTok = getToken();
+            if (yyTok == Tok_Colon) // ignore any colons in front of a typed enum
+                yyTok = getToken();
             break;
         default:
             if (!yyParenDepth && !maybeInTrailingReturnType)
