@@ -1963,7 +1963,7 @@ void DocBookGenerator::generateObsoleteMembers(const Sections &sections)
         return;
 
     Aggregate *aggregate = sections.aggregate();
-    startSection("obsolete", "Obsolete Members for " + aggregate->name());
+    startSection("obsolete", "Obsolete Members for " + aggregate->plainFullName());
 
     m_writer->writeStartElement(dbNamespace, "para");
     m_writer->writeStartElement(dbNamespace, "emphasis");
@@ -3003,28 +3003,20 @@ void DocBookGenerator::generateCppReferencePage(Node *node)
     const auto aggregate = static_cast<const Aggregate *>(node);
 
     QString title;
-    QString rawTitle;
-    QString fullTitle;
+    QString subtitleText;
+    const QString typeWord{aggregate->typeWord(true)};
     if (aggregate->isNamespace()) {
-        rawTitle = aggregate->plainName();
-        fullTitle = aggregate->plainFullName();
-        title = rawTitle + " Namespace";
+        title = "%1 %2"_L1.arg(aggregate->plainFullName(), typeWord);
     } else if (aggregate->isClass()) {
-        rawTitle = aggregate->plainName();
-
         auto templateDecl = node->templateDecl();
         if (templateDecl)
-            fullTitle = QString("%1 %2 ").arg((*templateDecl).to_qstring(), aggregate->typeWord(false));
-
-        fullTitle += aggregate->plainFullName();
-        title = rawTitle + QLatin1Char(' ') + aggregate->typeWord(true);
+            subtitleText = "%1 %2 %3"_L1.arg((*templateDecl).to_qstring(),
+                                             aggregate->typeWord(false),
+                                             aggregate->plainFullName());
+        title = "%1 %2"_L1.arg(aggregate->plainFullName(), typeWord);
     } else if (aggregate->isHeader()) {
-        title = fullTitle = rawTitle = aggregate->fullTitle();
+        title =  aggregate->fullTitle();
     }
-
-    QString subtitleText;
-    if (rawTitle != fullTitle)
-        subtitleText = fullTitle;
 
     // Start producing the DocBook file.
     m_writer = startDocument(node);

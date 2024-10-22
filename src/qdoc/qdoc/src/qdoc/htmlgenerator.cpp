@@ -1075,52 +1075,42 @@ QString HtmlGenerator::groupReferenceText(PageNode* node) {
 void HtmlGenerator::generateCppReferencePage(Aggregate *aggregate, CodeMarker *marker)
 {
     QString title;
-    QString rawTitle;
     QString fullTitle;
     NamespaceNode *ns = nullptr;
     SectionVector *summarySections = nullptr;
     SectionVector *detailsSections = nullptr;
 
     Sections sections(aggregate);
-    QString word = aggregate->typeWord(true);
+    QString typeWord = aggregate->typeWord(true);
     auto templateDecl = aggregate->templateDecl();
     if (aggregate->isNamespace()) {
-        rawTitle = aggregate->plainName();
         fullTitle = aggregate->plainFullName();
-        title = rawTitle + " Namespace";
+        title = "%1 %2"_L1.arg(fullTitle, typeWord);
         ns = static_cast<NamespaceNode *>(aggregate);
         summarySections = &sections.stdSummarySections();
         detailsSections = &sections.stdDetailsSections();
     } else if (aggregate->isClassNode()) {
-        rawTitle = aggregate->plainName();
         fullTitle = aggregate->plainFullName();
-        title = rawTitle + QLatin1Char(' ') + word;
+        title = "%1 %2"_L1.arg(fullTitle, typeWord);
         summarySections = &sections.stdCppClassSummarySections();
         detailsSections = &sections.stdCppClassDetailsSections();
     } else if (aggregate->isHeader()) {
-        title = fullTitle = rawTitle = aggregate->fullTitle();
+        title = fullTitle = aggregate->fullTitle();
         summarySections = &sections.stdSummarySections();
         detailsSections = &sections.stdDetailsSections();
     }
 
     Text subtitleText;
-    if (rawTitle != fullTitle || templateDecl) {
-        if (aggregate->isClassNode()) {
-            if (templateDecl)
-                subtitleText << (*templateDecl).to_qstring() + QLatin1Char(' ');
-            subtitleText << aggregate->typeWord(false) + QLatin1Char(' ');
-            const QStringList ancestors = fullTitle.split(QLatin1String("::"));
-            for (const auto &a : ancestors) {
-                if (a == rawTitle) {
-                    subtitleText << a;
-                    break;
-                } else {
-                    subtitleText << Atom(Atom::AutoLink, a) << "::";
-                }
-            }
-        } else {
-            subtitleText << fullTitle;
-        }
+    // Generate a subtitle if there are parents to link to, or a template declaration
+    if (aggregate->parent()->isInAPI() || templateDecl) {
+        if (templateDecl)
+            subtitleText << "%1 "_L1.arg((*templateDecl).to_qstring());
+        subtitleText << aggregate->typeWord(false) << " "_L1;
+        auto ancestors = fullTitle.split("::"_L1);
+        ancestors.pop_back();
+        for (const auto &a : ancestors)
+            subtitleText << Atom(Atom::AutoLink, a) << "::"_L1;
+        subtitleText << aggregate->plainName();
     }
 
     generateHeader(title, aggregate, marker);
@@ -2404,7 +2394,7 @@ QString HtmlGenerator::generateAllMembersFile(const Section &section, CodeMarker
     const Aggregate *aggregate = section.aggregate();
     QString fileName = fileBase(aggregate) + "-members." + fileExtension();
     beginSubPage(aggregate, fileName);
-    QString title = "List of All Members for " + aggregate->name();
+    QString title = "List of All Members for " + aggregate->plainFullName();
     generateHeader(title, aggregate, marker);
     generateSidebar();
     generateTitle(title, Text(), SmallSubTitle, aggregate, marker);
@@ -2498,7 +2488,7 @@ QString HtmlGenerator::generateObsoleteMembersFile(const Sections &sections, Cod
         return QString();
 
     Aggregate *aggregate = sections.aggregate();
-    QString title = "Obsolete Members for " + aggregate->name();
+    QString title = "Obsolete Members for " + aggregate->plainFullName();
     QString fileName = fileBase(aggregate) + "-obsolete." + fileExtension();
 
     beginSubPage(aggregate, fileName);

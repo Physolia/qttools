@@ -683,30 +683,34 @@ void Aggregate::resolveQmlInheritance()
 
 /*!
   Returns a word representing the kind of Aggregate this node is.
-  Currently only works for class, struct, and union, but it can
-  easily be extended. If \a cap is true, the word is capitalised.
+  Currently recognizes class, struct, union, and namespace.
+  If \a cap is true, the word is capitalised.
  */
 QString Aggregate::typeWord(bool cap) const
 {
     if (cap) {
         switch (nodeType()) {
         case Node::Class:
-            return QLatin1String("Class");
+            return "Class"_L1;
         case Node::Struct:
-            return QLatin1String("Struct");
+            return "Struct"_L1;
         case Node::Union:
-            return QLatin1String("Union");
+            return "Union"_L1;
+        case Node::Namespace:
+            return "Namespace"_L1;
         default:
             break;
         }
     } else {
         switch (nodeType()) {
         case Node::Class:
-            return QLatin1String("class");
+            return "class"_L1;
         case Node::Struct:
-            return QLatin1String("struct");
+            return "struct"_L1;
         case Node::Union:
-            return QLatin1String("union");
+            return "union"_L1;
+        case Node::Namespace:
+            return "namespace"_L1;
         default:
             break;
         }
