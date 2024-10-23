@@ -266,6 +266,7 @@ void tst_lupdate::good_data()
         "parsecontexts"_L1,
         "parsecpp"_L1,
         "parsecpp2",
+        "parsecpp_template"_L1,
         "parseqrc_json"_L1,
         "prefix"_L1,
         "preprocess"_L1,

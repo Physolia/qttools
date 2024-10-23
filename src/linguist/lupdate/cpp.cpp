@@ -1734,8 +1734,13 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
             /*
               Partial support for inlined functions.
             */
+
+           case_class:
             yyTok = getToken();
-            if (yyBraceDepth == namespaceDepths.size() && yyParenDepth == 0) {
+            if (yyTok == Tok_Equals) { // we're in a template entity
+                yyTok = getToken();
+                break;
+            } else if (yyBraceDepth == namespaceDepths.size() && yyParenDepth == 0) {
                 NamespaceList quali;
                 HashString fct;
 
@@ -1774,6 +1779,8 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
                             goto goteof;
                         if (yyTok == Tok_Cancel)
                             goto case_default;
+                        if (yyTok == Tok_class)
+                            goto case_class;
                     } while (yyTok != Tok_LeftBrace && yyTok != Tok_Semicolon);
                 } else {
                     if (yyTok != Tok_LeftBrace) {
