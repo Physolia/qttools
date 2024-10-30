@@ -96,6 +96,14 @@ protected:
                                       .arg(name));
                     return;
                 }
+                if (auto expr = AST::cast<AST::TemplateLiteral *>(node->arguments->expression)) {
+                    if (expr->next) {
+                        yyMsg(identLineNo)
+                        << qPrintable(QStringLiteral("%1() template strings with "
+                                    "arguments are not supported for translation.\n").arg(name));
+                        return;
+                    }
+                }
 
                 QString source;
                 if (!createString(node->arguments->expression, &source))
