@@ -1509,7 +1509,6 @@ static const char *defaultArgs_[] = {
     "-Wno-nullability-completeness",
     "-fvisibility=default",
     "-ferror-limit=0",
-    ("-I" CLANG_RESOURCE_DIR),
     "-xc++"
 };
 
