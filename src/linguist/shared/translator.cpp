@@ -51,32 +51,27 @@ QList<Translator::FileFormat> &Translator::registeredFileFormats()
 
 void Translator::addIndex(int idx, const TranslatorMessage &msg) const
 {
-    if (msg.sourceText().isEmpty() && msg.id().isEmpty()) {
-        m_ctxCmtIdx[msg.context()] = idx;
-    } else {
-        m_msgIdx[TMMKey(msg)] = idx;
-        if (!msg.id().isEmpty())
-            m_idMsgIdx[msg.id()] = idx;
-    }
+
+    m_msgIdx[TMMKey(msg)] = idx;
+    if (!msg.id().isEmpty())
+        m_idMsgIdx[msg.id()] = idx;
+
 }
 
 void Translator::delIndex(int idx) const
 {
     const TranslatorMessage &msg = m_messages.at(idx);
-    if (msg.sourceText().isEmpty() && msg.id().isEmpty()) {
-        m_ctxCmtIdx.remove(msg.context());
-    } else {
-        m_msgIdx.remove(TMMKey(msg));
-        if (!msg.id().isEmpty())
-            m_idMsgIdx.remove(msg.id());
-    }
+
+    m_msgIdx.remove(TMMKey(msg));
+    if (!msg.id().isEmpty())
+        m_idMsgIdx.remove(msg.id());
+
 }
 
 void Translator::ensureIndexed() const
 {
     if (!m_indexOk) {
         m_indexOk = true;
-        m_ctxCmtIdx.clear();
         m_idMsgIdx.clear();
         m_msgIdx.clear();
         for (int i = 0; i < m_messages.size(); i++)
@@ -386,12 +381,6 @@ int Translator::find(const QString &context,
         }
     }
     return -1;
-}
-
-int Translator::find(const QString &context) const
-{
-    ensureIndexed();
-    return m_ctxCmtIdx.value(context, -1);
 }
 
 void Translator::stripObsoleteMessages()

@@ -1487,7 +1487,7 @@ void CppParser::handleTr(QString &prefix, bool plural)
         yyMsg() << "//% cannot be used with tr() / QT_TR_NOOP(). Ignoring\n";
     int line = yyLineNo;
     yyTok = getToken();
-    if (matchString(&text) && !text.isEmpty()) {
+    if (matchString(&text)) {
         comment.clear();
 
         if (yyTok == Tok_RightParen) {

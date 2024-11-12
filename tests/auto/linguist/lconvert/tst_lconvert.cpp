@@ -341,6 +341,8 @@ void tst_lconvert::roundtrips_data()
     QTest::newRow("ts-qm-ts (variants)") << "variants.ts" << tsQmTs << outDeArgs;
     QTest::newRow("ts-po-ts (msgid)") << "msgid.ts" << tsPoTs << noArgs;
     QTest::newRow("ts-xliff-ts (msgid)") << "msgid.ts" << tsXlfTs << noArgs;
+    QTest::newRow("ts-qm-ts (emptymsg)") << "emptymsg.ts" << tsQmTs << noArgs;
+    QTest::newRow("ts-xliff-ts (emptymsg)") << "emptymsg.ts" << tsXlfTs << noArgs;
 
     QTest::newRow("ts-po-ts (endless loop)") << "endless-po-loop.ts" << tsPoTs << noArgs;
     QTest::newRow("ts-qm-ts (whitespace)") << "whitespace.ts" << tsQmTs << noArgs;

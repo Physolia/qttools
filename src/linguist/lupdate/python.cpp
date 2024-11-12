@@ -681,23 +681,20 @@ static void parse(Translator &tor, ConversionData &cd,
 
                     prefix.clear();
 
-                    if (!text.isEmpty()) {
-                        TranslatorMessage message(QString::fromUtf8(context),
-                                                  QString::fromUtf8(text),
-                                                  QString::fromUtf8(comment),
-                                                  {}, yyFileName, yyLineNo,
-                                                  {}, TranslatorMessage::Unfinished, plural);
-                        setMessageParameters(&message, lineNo);
-                        tor.extend(message, cd);
-                    }
+                    TranslatorMessage message(QString::fromUtf8(context),
+                                              QString::fromUtf8(text),
+                                              QString::fromUtf8(comment),
+                                              {}, yyFileName, yyLineNo,
+                                              {}, TranslatorMessage::Unfinished, plural);
+                    setMessageParameters(&message, lineNo);
+                    tor.extend(message, cd);
                 }
             }
                 break;
             case Tok_translate: {
                 bool plural{};
                 const int lineNo = yyCurLineNo;
-                if (parseTranslate(&text, &context, &comment, &utf8, &plural)
-                    && !text.isEmpty()) {
+                if (parseTranslate(&text, &context, &comment, &utf8, &plural)) {
                         TranslatorMessage message(QString::fromUtf8(context),
                                                   QString::fromUtf8(text),
                                                   QString::fromUtf8(comment),

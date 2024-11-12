@@ -208,7 +208,6 @@ private:
     ExtraData m_extra;
 
     mutable bool m_indexOk;
-    mutable QHash<QString, int> m_ctxCmtIdx;
     mutable QHash<QString, int> m_idMsgIdx;
     mutable QHash<TMMKey, int> m_msgIdx;
 };

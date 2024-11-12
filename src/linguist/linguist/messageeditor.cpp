@@ -94,7 +94,7 @@ void MessageEditor::setupEditorPage()
     editorPage->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
 
     m_source = new FormWidget(tr("Source text"), false);
-    m_source->setHideWhenEmpty(true);
+    m_source->setHideWhenEmpty(false);
     m_source->setWhatsThis(tr("This area shows the source text."));
     connect(m_source, &FormWidget::selectionChanged,
             this, &MessageEditor::selectionChanged);
@@ -612,20 +612,15 @@ void MessageEditor::showMessage(const MultiDataIndex &index)
         ed.transTexts.first()->setLabel(ed.pluralEditMode ? ed.firstForm : ed.invariantForm);
 
         // Translation forms
-        if (item->text().isEmpty() && !item->context().isEmpty()) {
-            for (int i = 0; i < ed.transTexts.size(); ++i)
-                ed.transTexts.at(i)->setVisible(false);
-        } else {
-            QStringList normalizedTranslations =
-                m_dataModel->model(j)->normalizedTranslations(*item);
-            for (int i = 0; i < ed.transTexts.size(); ++i) {
-                bool shouldShow = (i < normalizedTranslations.size());
-                if (shouldShow)
-                    setNumerusTranslation(j, normalizedTranslations.at(i), i);
-                else
-                    setNumerusTranslation(j, QString(), i);
-                ed.transTexts.at(i)->setVisible(i == 0 || shouldShow);
-            }
+        QStringList normalizedTranslations =
+            m_dataModel->model(j)->normalizedTranslations(*item);
+        for (int i = 0; i < ed.transTexts.size(); ++i) {
+            bool shouldShow = (i < normalizedTranslations.size());
+            if (shouldShow)
+                setNumerusTranslation(j, normalizedTranslations.at(i), i);
+            else
+                setNumerusTranslation(j, QString(), i);
+            ed.transTexts.at(i)->setVisible(i == 0 || shouldShow);
         }
 
         ed.transCommentText->setTranslation(item->translatorComment().trimmed(), false);

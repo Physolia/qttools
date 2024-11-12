@@ -87,6 +87,7 @@ class Window(QMainWindow):
         msg = self.tr("msg3")
         #: Extra comment 4
         msg = self.tr("msg4")
+        msg = self.tr("")
 
 
 if __name__ == '__main__':
