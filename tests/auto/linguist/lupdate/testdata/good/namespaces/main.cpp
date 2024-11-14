@@ -181,5 +181,32 @@ void foo()
 }
 }
 
+namespace Ns1::Ns2::Ns3 {
+    class Cl: public QObject {
+        Q_OBJECT
+        void func1();
+        void func2();
+        void func3();
+        void func4();
+    };
+
+    // inside namespace
+
+    void Cl::func1() {
+        tr("message1");
+    }
+
+    void Ns3::Cl::func2() {
+        tr("message2");
+    }
+
+    void Ns2::Ns3::Cl::func3() {
+        tr("message3");
+    }
+
+    void Ns1::Ns2::Ns3::Cl::func4() {
+        tr("message4");
+    }
+}
 
 //#include "main.moc"

@@ -1085,6 +1085,21 @@ bool CppParser::fullyQualify(const NamespaceList &namespaces, int nsCnt,
         nsIdx = nsCnt - 1;
     }
 
+    auto matchSeg = segments.crbegin();
+    auto matchNs = namespaces.crbegin();
+
+    if (matchSeg->value() != matchNs->value())
+        matchSeg++;
+
+    while (matchSeg != segments.crend()
+           && matchNs != namespaces.crend()
+           && matchSeg->value() == matchNs->value()) {
+
+        matchSeg++;
+        matchNs++;
+        nsIdx--;
+    }
+
     do {
         if (qualifyOne(namespaces, nsIdx + 1, segments[initSegIdx], resolved)) {
             int segIdx = initSegIdx;
