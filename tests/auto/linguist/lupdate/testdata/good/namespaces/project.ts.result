@@ -126,4 +126,12 @@
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>cl</name>
+    <message>
+        <location filename="main.cpp" line="218"/>
+        <source>text</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

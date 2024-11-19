@@ -209,4 +209,13 @@ namespace Ns1::Ns2::Ns3 {
     }
 }
 
+class cl: public QObject {
+    Q_OBJECT
+    void func();
+};
+
+void ::cl::func() {
+    tr("text");
+}
+
 //#include "main.moc"

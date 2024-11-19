@@ -170,6 +170,7 @@ private:
     QString yyFileName;
     int yyCh;
     bool yyAtNewline;
+    bool yyTrailingSpace;
     QString yyWord;
     qsizetype yyWordInitialCapacity = 0;
     QStack<IfdefState> yyIfdefStack;
@@ -576,6 +577,7 @@ CppParser::TokenType CppParser::getToken()
             } while ((yyCh >= 'A' && yyCh <= 'Z') || (yyCh >= 'a' && yyCh <= 'z')
                      || (yyCh >= '0' && yyCh <= '9') || yyCh == '_');
             yyWord.resize(ptr - (ushort *)yyWord.unicode());
+            yyTrailingSpace = isspace(yyCh);
 
             //qDebug() << "IDENT: " << yyWord;
 
@@ -1982,7 +1984,7 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
                 yyTok = getToken();
                 break;
             }
-            if (yyTok == Tok_ColonColon && !maybeInTrailingReturnType) {
+            if (yyTok == Tok_ColonColon && !maybeInTrailingReturnType && !yyTrailingSpace) {
                 prefix += yyWord;
                 prefix.detach();
             } else {
@@ -2012,7 +2014,8 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
             }
             if (yyBraceDepth == namespaceDepths.size() && yyParenDepth == 0 && !yyTokColonSeen)
                 prospectiveContext = prefix;
-            prefix += strColons;
+            if (!prefix.isEmpty())
+                prefix += strColons;
             yyTok = getToken();
             break;
         case Tok_RightBrace:
