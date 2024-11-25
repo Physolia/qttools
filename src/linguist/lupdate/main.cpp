@@ -146,7 +146,7 @@ QString ParserTool::transcode(const QString &str)
     QByteArray out;
 
     out.reserve(in.size());
-    for (int i = 0; i < in.size();) {
+    for (qsizetype i = 0; i < in.size();) {
         uchar c = in[i++];
         if (c == '\\') {
             if (i >= in.size())
@@ -157,9 +157,16 @@ QString ParserTool::transcode(const QString &str)
                 continue;
 
             if (c == 'x' || c == 'u' || c == 'U') {
+                qsizetype maxSize = 2; // \x
+                if (c == 'u')
+                    maxSize = 4;
+                else if (c == 'U')
+                    maxSize = 8;
+                maxSize = std::min(in.size(), i + maxSize);
+
                 const bool unicode = (c != 'x');
                 QByteArray hex;
-                while (i < in.size() && isxdigit((c = in[i]))) {
+                while (i < maxSize && isxdigit((c = in[i]))) {
                     hex += c;
                     i++;
                 }
