@@ -55,7 +55,6 @@ public:
     ~MainWindow();
 
     bool openFiles(const QStringList &names, bool readWrite = true);
-    static RecentFiles &recentFiles();
     static QString friendlyString(const QString &str);
 
 public slots:
@@ -238,6 +237,7 @@ private:
 
     Ui::MainWindow m_ui;    // menus and actions
     Statistics *m_statistics;
+    RecentFiles m_recentFiles;
 };
 
 QT_END_NAMESPACE
