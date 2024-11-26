@@ -149,8 +149,10 @@ public:
     const TranslatorMessage &constMessage(int i) const { return m_messages.at(i); }
     void dump() const;
 
+    void appendDependencies(const QStringList &dependencies);
     void setDependencies(const QStringList &dependencies) { m_dependencies = dependencies; }
     QStringList dependencies() const { return m_dependencies; }
+    void satisfyDependency(const QString &file, const QString &format);
 
     // additional file format specific data
     // note: use '<fileformat>:' as prefix for file format specific members,

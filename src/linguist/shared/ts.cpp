@@ -504,7 +504,7 @@ bool saveTS(const Translator &translator, QIODevice &dev, ConversionData &cd)
     if (!deps.isEmpty()) {
         t << "<dependencies>\n";
         for (const QString &dep : deps)
-            t << "<dependency catalog=\"" << dep << "\"/>\n";
+            t << "    <dependency catalog=\"" << dep << "\"/>\n";
         t << "</dependencies>\n";
     }
 

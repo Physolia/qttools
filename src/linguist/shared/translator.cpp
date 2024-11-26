@@ -236,6 +236,18 @@ static QString guessFormat(const QString &filename, const QString &format)
     return QLatin1String("ts");
 }
 
+static QString getDependencyName(const QString &filename, const QString &format)
+{
+    const QString file = QFileInfo(filename).fileName();
+    const QString fmt = guessFormat(file, format);
+
+    if (file.endsWith(QLatin1Char('.') + fmt))
+        return file.chopped(fmt.size() + 1);
+
+    // no extension in the file name
+    return file;
+}
+
 bool Translator::load(const QString &filename, ConversionData &cd, const QString &format)
 {
     cd.m_sourceDir = QFileInfo(filename).absoluteDir();
@@ -729,6 +741,27 @@ QString Translator::guessLanguageCodeFromFileName(const QString &filename)
     }
     //qDebug() << "LANGUAGE GUESSING UNSUCCESSFUL";
     return QString();
+}
+
+void Translator::appendDependencies(const QStringList &dependencies)
+{
+    QStringList mergeDeps;
+    for (const QString &dep : dependencies) {
+        if (const auto it = std::find(m_dependencies.cbegin(), m_dependencies.cend(), dep);
+            it == m_dependencies.cend()) {
+            mergeDeps.append(dep);
+        }
+    }
+    m_dependencies.append(mergeDeps);
+}
+
+void Translator::satisfyDependency(const QString &file, const QString &format)
+{
+    const auto dep = getDependencyName(file, format);
+    if (const auto it = std::find(m_dependencies.cbegin(), m_dependencies.cend(), dep);
+        it != m_dependencies.cend()) {
+        m_dependencies.erase(it);
+    }
 }
 
 bool Translator::hasExtra(const QString &key) const
