@@ -425,6 +425,13 @@ static void updateTsFiles(const Translator &fetchedTor, const QStringList &tsFil
             // If there is translation in the file, the language should be recognized
             // (when the language is not recognized, plural translations are lost)
             if (tor.translationsExist()) {
+
+                if (tor.languageCode().isEmpty()) {
+                    printErr("File %1 won't be updated: it does not specify any "
+                             "target languages. Please specify the target language "
+                             "in the file or use Linguist to set the language.\n"_L1.arg(fileName));
+                    continue;
+                }
                 QLocale::Language l;
                 QLocale::Territory c;
                 tor.languageAndTerritory(tor.languageCode(), &l, &c);
