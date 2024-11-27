@@ -13,6 +13,7 @@
 
 #include <QApplication>
 #include <QBoxLayout>
+#include <QCheckBox>
 #ifndef QT_NO_CLIPBOARD
 #include <QClipboard>
 #endif
@@ -114,6 +115,12 @@ void MessageEditor::setupEditorPage()
     connect(m_commentText, &FormWidget::selectionChanged,
             this, &MessageEditor::selectionChanged);
 
+    m_ncrModeBox = new QCheckBox(tr("NCR mode"));
+    m_ncrModeBox->setWhatsThis(tr("Toggles Numeric Character Reference Mode "
+                                  "for displaying the source text and the translations."));
+    m_ncrModeBox->setHidden(true);
+    connect(m_ncrModeBox, &QCheckBox::checkStateChanged, this, &MessageEditor::toggleNcrMode);
+
     QBoxLayout *subLayout = new QVBoxLayout;
 
     subLayout->setContentsMargins(5, 5, 5, 5);
@@ -121,10 +128,14 @@ void MessageEditor::setupEditorPage()
     subLayout->addWidget(m_pluralSource);
     subLayout->addWidget(m_commentText);
 
+    QBoxLayout *horizontalLayout = new QHBoxLayout;
+    horizontalLayout->addLayout(subLayout);
+    horizontalLayout->addWidget(m_ncrModeBox);
+
     m_layout = new QVBoxLayout;
     m_layout->setSpacing(2);
     m_layout->setContentsMargins(2, 2, 2, 2);
-    m_layout->addLayout(subLayout);
+    m_layout->addLayout(horizontalLayout);
     m_layout->addStretch(1);
     editorPage->setLayout(m_layout);
 
@@ -547,6 +558,8 @@ void MessageEditor::showNothing()
     m_source->clearTranslation();
     m_pluralSource->clearTranslation();
     m_commentText->clearTranslation();
+    m_ncrModeBox->setHidden(true);
+
     for (int j = 0; j < m_editors.size(); ++j) {
         setEditingEnabled(j, false);
         for (FormMultiWidget *widget : std::as_const(m_editors[j].transTexts))
@@ -558,6 +571,27 @@ void MessageEditor::showNothing()
 #endif
     updateBeginFromSource();
     updateUndoRedo();
+}
+
+void MessageEditor::toggleNcrMode()
+{
+    for (int j = 0; j < m_editors.size(); ++j) {
+
+        MessageItem *currentMessage = m_dataModel->messageItem(m_currentIndex, j);
+        if (!currentMessage)
+            continue;
+
+        bool newNcrMode = m_ncrModeBox->isChecked();
+        if (currentMessage->ncrMode() != newNcrMode) {
+            currentMessage->setNcrMode(newNcrMode);
+            m_source->setTranslation(currentMessage->text());
+            m_pluralSource->setTranslation(currentMessage->pluralText());
+            auto translations = currentMessage->translations();
+            for (int i = 0; i < translations.size(); i++)
+                setNumerusTranslation(j, translations.at(i), i);
+        }
+        break;
+    }
 }
 
 void MessageEditor::showMessage(const MultiDataIndex &index)
@@ -624,6 +658,9 @@ void MessageEditor::showMessage(const MultiDataIndex &index)
         }
 
         ed.transCommentText->setTranslation(item->translatorComment().trimmed(), false);
+
+        m_ncrModeBox->setCheckState(item->ncrMode() ? Qt::Checked : Qt::Unchecked);
+        m_ncrModeBox->setHidden(false);
     }
 
     updateUndoRedo();
