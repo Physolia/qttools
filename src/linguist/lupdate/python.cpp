@@ -158,12 +158,19 @@ static bool parseStringEscape(int quoteChar, StringType stringType)
         return true;
     }
 
-    if (yyCh == 'x') {
-        QByteArray hex = "0";
+    if (yyCh == 'x' || yyCh == 'u' || yyCh == 'U') {
+        qsizetype maxSize = 2; // \x
+        if (yyCh == 'u')
+            maxSize = 4;
+        else if (yyCh == 'U')
+            maxSize = 8;
+
+        QByteArray hex;
         yyCh = getChar();
         if (yyCh == EOF)
             return false;
-        while (std::isxdigit(yyCh)) {
+
+        while (maxSize-- && std::isxdigit(yyCh)) {
             hex += char(yyCh);
             yyCh = getChar();
             if (yyCh == EOF)
@@ -175,8 +182,11 @@ static bool parseStringEscape(int quoteChar, StringType stringType)
 #else
         std::sscanf(hex, "%x", &n);
 #endif
-        if (yyStringLen < sizeof(yyString) - 1)
-            yyString[yyStringLen++] = char(n);
+
+        QByteArray hexChar = QString(QChar(n)).toUtf8();
+        if (yyStringLen < sizeof(yyString) - hexChar.size())
+            for (char c : std::as_const(hexChar))
+                yyString[yyStringLen++] = c;
          return true;
     }
 

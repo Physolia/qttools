@@ -94,4 +94,3 @@ qsTrId("qtn_bar_baz", 10);
 qsTr("translation with extras-quoted field");
 //~ quoted "empty string"
 qsTr("");
-
