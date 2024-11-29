@@ -428,8 +428,8 @@ static void updateTsFiles(const Translator &fetchedTor, const QStringList &tsFil
 
                 if (tor.languageCode().isEmpty()) {
                     printErr("File %1 won't be updated: it does not specify any "
-                             "target languages. Please specify the target language "
-                             "in the file or use Linguist to set the language.\n"_L1.arg(fileName));
+                             "target languages. To set a target language, open "
+                             "the file in Qt Linguist.\n"_L1.arg(fileName));
                     continue;
                 }
                 QLocale::Language l;
