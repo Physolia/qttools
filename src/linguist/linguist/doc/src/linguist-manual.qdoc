@@ -1307,6 +1307,9 @@
         text IDs. For example, \c {qsTrId("id-back-backstep")} differentiates
         the back-step \e {Back} from the \c id-back-not-front \e {Back}.
 
+        \li Since context names are not allowed for text-ID-based translations,
+        \QL lists the IDs in a file without context names.
+
         \li The \e {engineering English} text that you see in the user interface for
         development builds is indicated with a \c {//%} comment. If you do not
         include this, the text ID is shown in the user interface. This is
