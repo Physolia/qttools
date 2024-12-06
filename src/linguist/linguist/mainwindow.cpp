@@ -2461,9 +2461,10 @@ static bool haveMnemonic(const QString &str)
             c = *p++;
             if (!c)
                 return false;
-            // "Nobody" ever really uses these alt-space, and they are highly annoying
-            // because we get a lot of false positives.
-            if (c != '&' && c != ' ' && QChar(c).isPrint()) {
+            // Matches QKeySequence::mnemonic(), except for
+            // '&#' - most likely the start of an NCR
+            // '& ' - too many false positives
+            if (c != '&' && c != ' ' && c != '#' && QChar(c).isPrint()) {
                 const ushort *pp = p;
                 for (; *p < 256 && isalpha(*p); p++) ;
                 if (pp == p || *p != ';')
