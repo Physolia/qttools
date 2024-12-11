@@ -163,7 +163,7 @@ private:
                       const QString &segments, bool isDeclaration,
                       NamespaceList *resolved, NamespaceList *unresolved) const;
     bool findNamespaceCallback(const Namespace *ns, void *context) const;
-    const Namespace *findNamespace(const NamespaceList &namespaces, int nsCount = -1) const;
+    Namespace *findNamespace(const NamespaceList &namespaces, int nsCount = -1) const;
     void enterNamespace(NamespaceList *namespaces, const HashString &name);
     void truncateNamespaces(NamespaceList *namespaces, int lenght);
     Namespace *modifyNamespace(NamespaceList *namespaces, bool haveLast = true);
@@ -943,6 +943,7 @@ Namespace *CppParser::modifyNamespace(NamespaceList *namespaces, bool haveLast)
                     if (const Namespace *ons = findNamespace(*namespaces, i + 1))
                         ns->classDef = ons->classDef;
                 pns->children.insert(namespaces->at(i), ns);
+                ns->parent = pns;
                 pns = ns;
             } while (++i < namespaces->size());
             break;
@@ -1150,9 +1151,9 @@ bool CppParser::findNamespaceCallback(const Namespace *ns, void *context) const
     return true;
 }
 
-const Namespace *CppParser::findNamespace(const NamespaceList &namespaces, int nsCount) const
+Namespace *CppParser::findNamespace(const NamespaceList &namespaces, int nsCount) const
 {
-    const Namespace *ns = 0;
+    Namespace *ns = 0;
     if (nsCount == -1)
         nsCount = namespaces.size();
     visitNamespace(namespaces, nsCount, &CppParser::findNamespaceCallback, &ns);
@@ -1162,8 +1163,11 @@ const Namespace *CppParser::findNamespace(const NamespaceList &namespaces, int n
 void CppParser::enterNamespace(NamespaceList *namespaces, const HashString &name)
 {
     *namespaces << name;
-    if (!findNamespace(*namespaces))
-        modifyNamespace(namespaces, false);
+    Namespace *ns;
+    if (!(ns = findNamespace(*namespaces)))
+        ns = modifyNamespace(namespaces, false);
+
+    ns->usings << ns->parent->usings;
 }
 
 void CppParser::truncateNamespaces(NamespaceList *namespaces, int length)
@@ -1854,6 +1858,8 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
                                 goto tokenInTemplate;
                         }
                     } while (yyTok != Tok_LeftBrace && yyTok != Tok_Semicolon);
+                    if (yyTok == Tok_Semicolon)
+                        break;
                 } else {
                     if (yyTok != Tok_LeftBrace) {
                         // Obviously a forward declaration. We skip those, as they
