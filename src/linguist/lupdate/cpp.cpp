@@ -74,7 +74,9 @@ public:
     void setInput(QTextStream &ts, const QString &fileName);
     void setTranslator(Translator *_tor) { tor = _tor; }
     void parse(ConversionData &cd, const QStringList &includeStack, QSet<QString> &inclusions);
-    void parseInternal(ConversionData &cd, const QStringList &includeStack, QSet<QString> &inclusions);
+    bool parseTranslate(QString &prefix);
+    void parseInternal(ConversionData &cd, const QStringList &includeStack,
+                       QSet<QString> &inclusions);
     const ParseResults *recordResults(bool isHeader);
     void deleteResults() { delete results; }
 
@@ -1683,7 +1685,52 @@ void CppParser::parse(ConversionData &cd, const QStringList &includeStack,
     parseInternal(cd, includeStack, inclusions);
 }
 
-void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStack, QSet<QString> &inclusions)
+bool CppParser::parseTranslate(QString &prefix)
+{
+    bool forcePlural = false;
+    switch (trFunctionAliasManager.trFunctionByName(yyWord)) {
+    case TrFunctionAliasManager::Function_Q_DECLARE_TR_FUNCTIONS:
+        handleDeclareTrFunctions();
+        break;
+    case TrFunctionAliasManager::Function_QT_TR_N_NOOP:
+        forcePlural = true;
+        Q_FALLTHROUGH();
+    case TrFunctionAliasManager::Function_tr:
+    case TrFunctionAliasManager::Function_trUtf8:
+    case TrFunctionAliasManager::Function_QT_TR_NOOP:
+    case TrFunctionAliasManager::Function_QT_TR_NOOP_UTF8:
+        if (tor)
+            handleTr(prefix, forcePlural);
+        break;
+    case TrFunctionAliasManager::Function_QT_TRANSLATE_N_NOOP:
+    case TrFunctionAliasManager::Function_QT_TRANSLATE_N_NOOP3:
+        forcePlural = true;
+        Q_FALLTHROUGH();
+    case TrFunctionAliasManager::Function_translate:
+    case TrFunctionAliasManager::Function_findMessage:
+    case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP:
+    case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP_UTF8:
+    case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP3:
+    case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP3_UTF8:
+        if (tor)
+            handleTranslate(forcePlural);
+        break;
+    case TrFunctionAliasManager::Function_QT_TRID_N_NOOP:
+        forcePlural = true;
+        Q_FALLTHROUGH();
+    case TrFunctionAliasManager::Function_qtTrId:
+    case TrFunctionAliasManager::Function_QT_TRID_NOOP:
+        if (tor)
+            handleTrId(forcePlural);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStack,
+                              QSet<QString> &inclusions)
 {
     static QString strColons(QLatin1String("::"));
 
@@ -1792,12 +1839,20 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
                     // a '::' or ':' token here.
                     do {
                         yyTok = getToken();
+                    tokenInTemplate:
                         if (yyTok == Tok_Eof)
                             goto goteof;
                         if (yyTok == Tok_Cancel)
                             goto case_default;
                         if (yyTok == Tok_class)
                             goto case_class;
+                        if (yyTok == Tok_Ident) {
+                            yyTok = getToken();
+                            if (yyTok == Tok_LeftParen)
+                                parseTranslate(prefix);
+                            else
+                                goto tokenInTemplate;
+                        }
                     } while (yyTok != Tok_LeftBrace && yyTok != Tok_Semicolon);
                 } else {
                     if (yyTok != Tok_LeftBrace) {
@@ -1942,53 +1997,17 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
             }
             yyTok = getToken();
             if (yyTok == Tok_LeftParen) {
-                bool forcePlural = false;
-                switch (trFunctionAliasManager.trFunctionByName(yyWord)) {
-                case TrFunctionAliasManager::Function_Q_DECLARE_TR_FUNCTIONS:
-                    handleDeclareTrFunctions();
+                if (parseTranslate(prefix)) {
+                    yyTok = getToken();
                     break;
-                case TrFunctionAliasManager::Function_QT_TR_N_NOOP:
-                    forcePlural = true;
-                    Q_FALLTHROUGH();
-                case TrFunctionAliasManager::Function_tr:
-                case TrFunctionAliasManager::Function_trUtf8:
-                case TrFunctionAliasManager::Function_QT_TR_NOOP:
-                case TrFunctionAliasManager::Function_QT_TR_NOOP_UTF8:
-                    if (tor)
-                        handleTr(prefix, forcePlural);
-                    break;
-                case TrFunctionAliasManager::Function_QT_TRANSLATE_N_NOOP:
-                case TrFunctionAliasManager::Function_QT_TRANSLATE_N_NOOP3:
-                    forcePlural = true;
-                    Q_FALLTHROUGH();
-                case TrFunctionAliasManager::Function_translate:
-                case TrFunctionAliasManager::Function_findMessage:
-                case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP:
-                case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP_UTF8:
-                case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP3:
-                case TrFunctionAliasManager::Function_QT_TRANSLATE_NOOP3_UTF8:
-                    if (tor)
-                        handleTranslate(forcePlural);
-                    break;
-                case TrFunctionAliasManager::Function_QT_TRID_N_NOOP:
-                    forcePlural = true;
-                    Q_FALLTHROUGH();
-                case TrFunctionAliasManager::Function_qtTrId:
-                case TrFunctionAliasManager::Function_QT_TRID_NOOP:
-                    if (tor)
-                        handleTrId(forcePlural);
-                    break;
-                default:
-                    goto notrfunc;
+                } else {
+                    prefix.clear();
                 }
-                yyTok = getToken();
-                break;
             }
             if (yyTok == Tok_ColonColon && !maybeInTrailingReturnType && !yyTrailingSpace) {
                 prefix += yyWord;
                 prefix.detach();
             } else {
-              notrfunc:
                 prefix.clear();
             }
             metaExpected = false;
