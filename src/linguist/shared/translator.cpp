@@ -318,8 +318,16 @@ bool Translator::save(const QString &filename, ConversionData &cd, const QString
 
     for (const FileFormat &format : std::as_const(registeredFileFormats())) {
         if (fmt == format.extension) {
-            if (format.saver)
+            if (format.saver) {
+                if (fmt != u"ts" && m_locationsType == RelativeLocations)
+                    std::cerr << "Warning: relative locations are not supported for non TS files. "
+                                 "File "
+                              << qPrintable(filename)
+                              << " will be generated with the "
+                                 "default location type."
+                              << std::endl;
                 return (*format.saver)(*this, file, cd);
+            }
             cd.appendError(QString(QLatin1String("Cannot save %1 files")).arg(fmt));
             return false;
         }
