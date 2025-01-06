@@ -857,6 +857,16 @@
     available in the translation area. For more information, see
     \l{Writing Source Code for Translation}.
 
+    \section1 Handling numeric character references (NCR) in translations
+
+    Select \uicontrol {NCR mode} to toggle the representation of
+    numeric character references in both the source text and the translation
+    fields. When selected, special characters in the text are displayed as their
+    corresponding NCRs (for examlple, &#160; for a non-breaking space). Otherwise, the
+    characters appear in their standard visual form. This feature is useful
+    for instance to maintain the same special characters (such as
+    emojis, special spaces) in both the source text and its translations.
+
     \section1 Changing the target locale
 
     You can set the locale information explicitly in \uicontrol Edit >
