@@ -98,13 +98,39 @@ private:
     };
 
     enum TokenType {
-        Tok_Eof, Tok_class, Tok_enum, Tok_friend, Tok_namespace, Tok_using, Tok_return,
-        Tok_decltype, Tok_Q_OBJECT, Tok_Access, Tok_Cancel,
-        Tok_Ident, Tok_String, Tok_RawString, Tok_Arrow, Tok_Colon, Tok_ColonColon,
-        Tok_Equals, Tok_LeftBracket, Tok_RightBracket, Tok_AngleBracket, Tok_QuestionMark,
-        Tok_LeftBrace, Tok_RightBrace, Tok_LeftParen, Tok_RightParen, Tok_Comma, Tok_Semicolon,
-        Tok_Null, Tok_Integer,
-        Tok_QuotedInclude, Tok_AngledInclude
+        Tok_Eof,
+        Tok_class,
+        Tok_enum,
+        Tok_friend,
+        Tok_namespace,
+        Tok_using,
+        Tok_return,
+        Tok_decltype,
+        Tok_Q_OBJECT,
+        Tok_Access,
+        Tok_Cancel,
+        Tok_Ident,
+        Tok_String,
+        Tok_RawString,
+        Tok_Arrow,
+        Tok_Colon,
+        Tok_ColonColon,
+        Tok_Equals,
+        Tok_LeftBracket,
+        Tok_RightBracket,
+        Tok_LeftAngleBracket,
+        Tok_RightAngleBracket,
+        Tok_QuestionMark,
+        Tok_LeftBrace,
+        Tok_RightBrace,
+        Tok_LeftParen,
+        Tok_RightParen,
+        Tok_Comma,
+        Tok_Semicolon,
+        Tok_Null,
+        Tok_Integer,
+        Tok_QuotedInclude,
+        Tok_AngledInclude
     };
 
     std::ostream &yyMsg(int line = 0);
@@ -804,9 +830,11 @@ CppParser::TokenType CppParser::getToken()
                 yyCh = getChar();
                 return Tok_Equals;
             case '>':
+                yyCh = getChar();
+                return Tok_RightAngleBracket;
             case '<':
                 yyCh = getChar();
-                return Tok_AngleBracket;
+                return Tok_LeftAngleBracket;
             case '\'':
                 yyCh = getChar();
                 if (yyCh == '\\')
@@ -1453,6 +1481,7 @@ bool CppParser::matchExpression()
         return true;
 
     int parenlevel = 0;
+    int angleBracketLevel = 0;
     while (match(Tok_Ident) || parenlevel > 0) {
         if (yyTok == Tok_RightParen) {
             if (parenlevel == 0) break;
@@ -1465,11 +1494,21 @@ bool CppParser::matchExpression()
             } else {
                 ++parenlevel;
             }
+        } else if (yyTok == Tok_LeftAngleBracket) {
+            angleBracketLevel++;
+            yyTok = getToken();
+        } else if (yyTok == Tok_RightAngleBracket) {
+            angleBracketLevel--;
+            yyTok = getToken();
+            if (yyTok == Tok_LeftParen) {
+                parenlevel++;
+            }
+            yyTok = getToken();
         } else if (yyTok == Tok_Ident) {
             continue;
         } else if (yyTok == Tok_Arrow) {
             yyTok = getToken();
-        } else if (parenlevel == 0 || yyTok == Tok_Cancel) {
+        } else if ((parenlevel == 0 && angleBracketLevel == 0) || yyTok == Tok_Cancel) {
             return false;
         }
     }
@@ -1838,7 +1877,7 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
                     }
                 }
 
-                if (yyTok == Tok_Colon || yyTok == Tok_AngleBracket) {
+                if (yyTok == Tok_Colon || yyTok == Tok_LeftAngleBracket) {
                     // Skip any token until '{' or ';' since we might do things wrong if we find
                     // a '::' or ':' token here.
                     do {

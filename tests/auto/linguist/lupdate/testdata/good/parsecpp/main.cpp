@@ -83,8 +83,8 @@ void Dialog2::func()
     trans.translate("QTranslator", "Plural without comment", 0, 1);
     trans.translate("QTranslator", "Plural with comment", "comment 1", n);
     trans.translate("QTranslator", "Plural with comment", "comment 2", getCount());
-
-
+    trans.translate("QTranslator", "Plural with comment and static cast", "comment 3",
+                    static_cast<long>(getCount()));
 
 
 
