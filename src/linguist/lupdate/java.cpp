@@ -203,9 +203,12 @@ static int getToken()
                         }
                         else if ( yyCh == QLatin1Char('\n') ) {
                             yyCh = getChar();
-                        }
-                        else {
-                            yyString.append( QLatin1Char(backTab[strchr( tab, yyCh.toLatin1() ) - tab]) );
+                        } else if (const char *p = strchr(tab, yyCh.toLatin1()); p) {
+                            yyString.append(QLatin1Char(backTab[p - tab]));
+                            yyCh = getChar();
+                        } else {
+                            yyMsg() << "Invalid escaped character \'\\" << qPrintable(yyCh)
+                                    << "\'\n";
                             yyCh = getChar();
                         }
                     } else {
