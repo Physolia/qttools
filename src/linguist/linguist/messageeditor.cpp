@@ -803,12 +803,10 @@ void MessageEditor::clipboardChanged()
 
 void MessageEditor::selectAll()
 {
-    // make sure we don't select the selection of a translator textedit,
-    // if we really want the source text editor to be selected.
     QTextEdit *te;
-    if ((te = m_source->getEditor())->underMouse()
-        || (te = m_pluralSource->getEditor())->underMouse()
-        || ((te = activeEditor()) && te->hasFocus()))
+    if (((te = activeEditor()) && te->hasFocus())
+        || (te = m_source->getEditor())->underMouse()
+        || (te = m_pluralSource->getEditor())->underMouse())
         te->selectAll();
 }
 
