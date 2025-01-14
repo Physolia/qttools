@@ -787,10 +787,9 @@ int main(int argc, char **argv)
 #ifndef Q_OS_WIN32
     QTranslator translator;
     QTranslator qtTranslator;
-    QString sysLocale = QLocale::system().name();
     QString resourceDir = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
-    if (translator.load(QLatin1String("linguist_") + sysLocale, resourceDir)
-        && qtTranslator.load(QLatin1String("qt_") + sysLocale, resourceDir)) {
+    if (translator.load(QLatin1String("linguist_en"), resourceDir)
+        && qtTranslator.load(QLatin1String("qt_en"), resourceDir)) {
         app.installTranslator(&translator);
         app.installTranslator(&qtTranslator);
     }
