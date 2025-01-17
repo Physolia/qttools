@@ -587,7 +587,7 @@ bool MainWindow::openFiles(const QStringList &names, bool globalReadWrite)
         if (fi.exists()) // Make the loader error out instead of reading stdin
             name = fi.canonicalFilePath();
         if (m_dataModel->isFileLoaded(name) >= 0)
-            continue;
+            closeOld = true;
 
         bool langGuessed;
         DataModel *dm = new DataModel(m_dataModel);
