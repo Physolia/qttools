@@ -70,6 +70,15 @@ protected:
         return false;
     }
 
+    void endVisit(AST::TemplateLiteral *node) override
+    {
+        do {
+            if (auto *expr = AST::cast<AST::CallExpression *>(node->expression))
+                endVisit(expr);
+            node = node->next;
+        } while (node);
+    }
+
     void endVisit(AST::CallExpression *node) override
     {
         QString name;
