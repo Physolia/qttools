@@ -526,6 +526,12 @@ bool MessageEditor::eventFilter(QObject *o, QEvent *e)
         QPalette p;
         p.setBrush(QPalette::Window, p.brush(QPalette::Active, QPalette::Base));
         setPalette(p);
+        if (m_editors.size() > 1) {
+            for (qsizetype i = 0; i < m_editors.size(); i++) {
+                m_editors[i].container->setPalette(paletteForModel(i));
+                m_editors[i].container->setAutoFillBackground(true);
+            }
+        }
     }
 
     return QScrollArea::eventFilter(o, e);
