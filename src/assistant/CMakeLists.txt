@@ -1,6 +1,12 @@
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: BSD-3-Clause
 
+if(NOT QT_FEATURE_fullqthelp)
+    add_subdirectory(help)
+    add_subdirectory(plugins)
+    return()
+endif()
+
 if(NOT TARGET Qt::Sql OR NOT TARGET Qt::PrintSupport)
     return()
 endif()

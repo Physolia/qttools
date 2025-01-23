@@ -27,7 +27,7 @@ endif()
 qt_feature("assistant" PRIVATE
     LABEL "Qt Assistant"
     PURPOSE "Qt Assistant is a tool for viewing on-line documentation in Qt help file format."
-    CONDITION TARGET Qt::Widgets AND TARGET Qt::Network AND QT_FEATURE_png AND QT_FEATURE_pushbutton AND QT_FEATURE_toolbutton AND (sqlite_plugin_available OR QT_BUILD_SHARED_LIBS)
+    CONDITION sqlite_plugin_available OR QT_BUILD_SHARED_LIBS
 )
 qt_feature("clang" PRIVATE
     LABEL "libclang found"
@@ -92,6 +92,12 @@ qt_feature("qtplugininfo" PRIVATE
     LABEL "qtplugininfo"
     PURPOSE "qtplugininfo dumps metadata about Qt plugins in JSON format."
     CONDITION QT_FEATURE_commandlineparser AND QT_FEATURE_library AND (android_app OR NOT ANDROID)
+)
+qt_feature("fullqthelp" PUBLIC
+    LABEL "fullqthelp"
+    PURPOSE "Builds Help with Gui and Widget dependency."
+    CONDITION (TARGET Qt::Widgets) AND (TARGET Qt::Network) AND QT_FEATURE_png AND
+        QT_FEATURE_pushbutton AND QT_FEATURE_toolbutton
 )
 qt_configure_add_summary_section(NAME "Qt Tools")
 qt_configure_add_summary_entry(ARGS "assistant")
