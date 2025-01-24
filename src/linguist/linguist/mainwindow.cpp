@@ -63,11 +63,8 @@
 
 #include <ctype.h>
 
-QT_BEGIN_NAMESPACE
-
 using namespace Qt::Literals::StringLiterals;
-
-static const int MessageMS = 2500;
+namespace {
 
 enum Ending {
     End_None,
@@ -76,11 +73,6 @@ enum Ending {
     End_Colon,
     End_Ellipsis
 };
-
-static bool hasFormPreview(const QString &fileName)
-{
-    return fileName.endsWith(".ui"_L1) || fileName.endsWith(".jui"_L1);
-}
 
 static QString leadingWhitespace(const QString &str)
 {
@@ -147,6 +139,175 @@ static Ending ending(QString str, QLocale::Language lang)
     }
 }
 
+static bool haveMnemonic(const QString &str)
+{
+    for (const ushort *p = (ushort *)str.constData();;) { // Assume null-termination
+        ushort c = *p++;
+        if (!c)
+            break;
+        if (c == '&') {
+            c = *p++;
+            if (!c)
+                return false;
+            // Matches QKeySequence::mnemonic(), except for
+            // '&#' - most likely the start of an NCR
+            // '& ' - too many false positives
+            if (c != '&' && c != ' ' && c != '#' && QChar(c).isPrint()) {
+                const ushort *pp = p;
+                for (; *p < 256 && isalpha(*p); p++)
+                    ;
+                if (pp == p || *p != ';')
+                    return true;
+                // This looks like a HTML &entity;, so ignore it. As a HTML string
+                // won't contain accels anyway, we can stop scanning here.
+                break;
+            }
+        }
+    }
+    return false;
+}
+
+static QHash<int, int> countPlaceMarkers(const QString &str)
+{
+    QHash<int, int> counts;
+    const QChar *c = str.unicode();
+    const QChar *cend = c + str.size();
+    while (c < cend) {
+        if (c->unicode() == '%') {
+            const QChar *escape_start = ++c;
+            while (c->isDigit())
+                ++c;
+            const QChar *escape_end = c;
+            bool ok = true;
+            int markerIndex =
+                    QString::fromRawData(escape_start, escape_end - escape_start).toInt(&ok);
+            if (ok)
+                counts[markerIndex]++;
+        } else {
+            ++c;
+        }
+    }
+    return counts;
+}
+
+struct Validator
+{
+
+    static Validator fromSource(const QString &source, const Ui::MainWindow &ui,
+                                const QLocale::Language &locale,
+                                const QHash<QString, QList<Phrase *>> &phrases)
+    {
+        Validator v;
+        if (ui.actionAccelerators->isChecked())
+            v.m_haveMnemonic.emplace(haveMnemonic(source));
+        if (ui.actionEndingPunctuation->isChecked())
+            v.m_ending.emplace(ending(source, locale));
+        if (ui.actionPlaceMarkerMatches->isChecked())
+            v.m_placeMarkerCounts.emplace(countPlaceMarkers(source));
+        if (ui.actionSurroundingWhitespace->isChecked()) {
+            v.m_leadingWhiteSpace.emplace(leadingWhitespace(source));
+            v.m_trailingWhiteSpace.emplace(trailingWhitespace(source));
+        }
+        if (ui.actionPhraseMatches->isChecked()) {
+            v.m_matchingPhraseTargets.emplace();
+            QString fsource = MainWindow::friendlyString(source);
+            QStringList lookupWords = fsource.split(QLatin1Char(' '));
+
+            for (const QString &s : std::as_const(lookupWords))
+                if (auto wordPhrases = phrases.find(s); wordPhrases != phrases.constEnd())
+                    for (const Phrase *p : *wordPhrases)
+                        if (fsource == MainWindow::friendlyString(p->source()))
+                            v.m_matchingPhraseTargets.value()[s].append(
+                                    MainWindow::friendlyString(p->target()));
+        }
+
+        return v;
+    }
+
+    bool validate(const QString &translation, const QLocale::Language &locale, int modelId,
+                  bool needsRef, bool verbose, ErrorsView *errorsView)
+    {
+        bool danger = false;
+        if (m_haveMnemonic) {
+            if (*m_haveMnemonic != haveMnemonic(translation)) {
+                danger = true;
+                if (verbose)
+                    errorsView->addError(modelId,
+                                         *m_haveMnemonic ? ErrorsView::MissingAccelerator
+                                                         : ErrorsView::SuperfluousAccelerator);
+            }
+        }
+        if (m_placeMarkerCounts) {
+            if (*m_placeMarkerCounts != countPlaceMarkers(translation)) {
+                danger = true;
+                if (verbose)
+                    errorsView->addError(modelId, ErrorsView::PlaceMarkersDiffer);
+            }
+            if (needsRef && !translation.contains(QLatin1String("%n"))
+                && !translation.contains(QLatin1String("%Ln"))) {
+                danger = true;
+                if (verbose)
+                    errorsView->addError(modelId, ErrorsView::NumerusMarkerMissing);
+            }
+        }
+        if (m_ending) {
+            if (*m_ending != ending(translation, locale)) {
+                danger = true;
+                if (verbose)
+                    errorsView->addError(modelId, ErrorsView::PunctuationDiffers);
+            }
+        }
+        if (m_leadingWhiteSpace) {
+            Q_ASSERT(m_trailingWhiteSpace);
+            if (*m_leadingWhiteSpace != leadingWhitespace(translation)
+                || *m_trailingWhiteSpace != trailingWhitespace(translation)) {
+                danger = true;
+                if (verbose)
+                    errorsView->addError(modelId, ErrorsView::SurroundingWhitespaceDiffers);
+            }
+        }
+        if (m_matchingPhraseTargets) {
+            const QString ftranslation = MainWindow::friendlyString(translation);
+            for (auto itr = m_matchingPhraseTargets->cbegin();
+                 itr != m_matchingPhraseTargets->cend(); itr++) {
+                bool found = false;
+                for (const QString &target : itr.value()) {
+                    if (ftranslation.indexOf(target) >= 0) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    danger = true;
+                    if (verbose)
+                        errorsView->addError(modelId, ErrorsView::IgnoredPhrasebook, itr.key());
+                }
+            }
+        }
+
+        return danger;
+    }
+
+private:
+    Validator() = default;
+    std::optional<bool> m_haveMnemonic;
+    std::optional<QString> m_leadingWhiteSpace;
+    std::optional<QString> m_trailingWhiteSpace;
+    std::optional<Ending> m_ending;
+    std::optional<QHash<QString, QStringList>> m_matchingPhraseTargets;
+    std::optional<QHash<int, int>> m_placeMarkerCounts;
+};
+
+static const int MessageMS = 2500;
+
+static bool hasFormPreview(const QString &fileName)
+{
+    return fileName.endsWith(".ui"_L1) || fileName.endsWith(".jui"_L1);
+}
+
+} // namespace
+
+QT_BEGIN_NAMESPACE
 
 class ContextItemDelegate : public QItemDelegate
 {
@@ -2426,33 +2587,6 @@ void MainWindow::updatePhraseDicts()
     m_phraseView->update();
 }
 
-static bool haveMnemonic(const QString &str)
-{
-    for (const ushort *p = (ushort *)str.constData();; ) { // Assume null-termination
-        ushort c = *p++;
-        if (!c)
-            break;
-        if (c == '&') {
-            c = *p++;
-            if (!c)
-                return false;
-            // Matches QKeySequence::mnemonic(), except for
-            // '&#' - most likely the start of an NCR
-            // '& ' - too many false positives
-            if (c != '&' && c != ' ' && c != '#' && QChar(c).isPrint()) {
-                const ushort *pp = p;
-                for (; *p < 256 && isalpha(*p); p++) ;
-                if (pp == p || *p != ';')
-                    return true;
-                // This looks like a HTML &entity;, so ignore it. As a HTML string
-                // won't contain accels anyway, we can stop scanning here.
-                break;
-            }
-        }
-    }
-    return false;
-}
-
 void MainWindow::updateDanger(const MultiDataIndex &index, bool verbose)
 {
     MultiDataIndex curIdx = index;
@@ -2474,145 +2608,25 @@ void MainWindow::updateDanger(const MultiDataIndex &index, bool verbose)
                 if (source.isEmpty())
                     source = m->text();
             }
+
+            Validator validator = Validator::fromSource(
+                    source, m_ui, m_dataModel->sourceLanguage(mi), m_phraseDict[mi]);
             QStringList translations = m->translations();
 
-            // Truncated variants are permitted to be "denormalized"
-            for (int i = 0; i < translations.size(); ++i) {
-                int sep = translations.at(i).indexOf(Translator::BinaryVariantSeparator);
-                if (sep >= 0)
-                    translations[i].truncate(sep);
-            }
+            int i = 0;
+            for (QStringView translation : std::as_const(translations)) {
+                while (!translation.isEmpty()) {
+                    auto sep = translation.indexOf(Translator::BinaryVariantSeparator);
+                    if (sep < 0)
+                        sep = translation.size();
+                    const QString trans = translation.first(sep).toString();
 
-            if (m_ui.actionAccelerators->isChecked()) {
-                bool sk = haveMnemonic(source);
-                bool tk = true;
-                for (int i = 0; i < translations.size() && tk; ++i) {
-                    tk &= haveMnemonic(translations[i]);
-                }
+                    const bool needsRef = m->message().isPlural()
+                            && m_dataModel->model(mi)->countRefNeeds().at(i++);
+                    danger |= validator.validate(trans, m_dataModel->language(mi), mi, needsRef,
+                                                 verbose, m_errorsView);
 
-                if (!sk && tk) {
-                    if (verbose)
-                        m_errorsView->addError(mi, ErrorsView::SuperfluousAccelerator);
-                    danger = true;
-                } else if (sk && !tk) {
-                    if (verbose)
-                        m_errorsView->addError(mi, ErrorsView::MissingAccelerator);
-                    danger = true;
-                }
-            }
-            if (m_ui.actionSurroundingWhitespace->isChecked()) {
-                bool whitespaceok = true;
-                for (int i = 0; i < translations.size() && whitespaceok; ++i) {
-                    whitespaceok &= (leadingWhitespace(source) == leadingWhitespace(translations[i]));
-                    whitespaceok &= (trailingWhitespace(source) == trailingWhitespace(translations[i]));
-                }
-
-                if (!whitespaceok) {
-                    if (verbose)
-                        m_errorsView->addError(mi, ErrorsView::SurroundingWhitespaceDiffers);
-                    danger = true;
-                }
-            }
-            if (m_ui.actionEndingPunctuation->isChecked()) {
-                bool endingok = true;
-                for (int i = 0; i < translations.size() && endingok; ++i) {
-                    endingok &= (ending(source, m_dataModel->sourceLanguage(mi)) ==
-                                ending(translations[i], m_dataModel->language(mi)));
-                }
-
-                if (!endingok) {
-                    if (verbose)
-                        m_errorsView->addError(mi, ErrorsView::PunctuationDiffers);
-                    danger = true;
-                }
-            }
-            if (m_ui.actionPhraseMatches->isChecked()) {
-                QString fsource = friendlyString(source);
-                QString ftranslation = friendlyString(translations.first());
-                QStringList lookupWords = fsource.split(u' ');
-
-                bool phraseFound;
-                for (const QString &s : std::as_const(lookupWords)) {
-                    if (m_phraseDict[mi].contains(s)) {
-                        phraseFound = true;
-                        const auto phrases = m_phraseDict[mi].value(s);
-                        for (const Phrase *p : phrases) {
-                            if (fsource == friendlyString(p->source())) {
-                                if (ftranslation.indexOf(friendlyString(p->target())) >= 0) {
-                                    phraseFound = true;
-                                    break;
-                                } else {
-                                    phraseFound = false;
-                                }
-                            }
-                        }
-                        if (!phraseFound) {
-                            if (verbose)
-                                m_errorsView->addError(mi, ErrorsView::IgnoredPhrasebook, s);
-                            danger = true;
-                        }
-                    }
-                }
-            }
-
-            if (m_ui.actionPlaceMarkerMatches->isChecked()) {
-                // Stores the occurrence count of the place markers in the map placeMarkerIndexes.
-                // i.e. the occurrence count of %1 is stored at placeMarkerIndexes[1],
-                // count of %2 is stored at placeMarkerIndexes[2] etc.
-                // In the first pass, it counts all place markers in the sourcetext.
-                // In the second pass it (de)counts all place markers in the translation.
-                // When finished, all elements should have returned to a count of 0,
-                // if not there is a mismatch
-                // between place markers in the source text and the translation text.
-                QHash<int, int> placeMarkerIndexes;
-                QString translation;
-                int numTranslations = translations.size();
-                for (int pass = 0; pass < numTranslations + 1; ++pass) {
-                    const QChar *uc_begin = source.unicode();
-                    const QChar *uc_end = uc_begin + source.size();
-                    if (pass >= 1) {
-                        translation = translations[pass - 1];
-                        uc_begin = translation.unicode();
-                        uc_end = uc_begin + translation.size();
-                    }
-                    const QChar *c = uc_begin;
-                    while (c < uc_end) {
-                        if (c->unicode() == '%') {
-                            const QChar *escape_start = ++c;
-                            while (c->isDigit())
-                                ++c;
-                            const QChar *escape_end = c;
-                            bool ok = true;
-                            int markerIndex = QString::fromRawData(
-                                    escape_start, escape_end - escape_start).toInt(&ok);
-                            if (ok)
-                                placeMarkerIndexes[markerIndex] += (pass == 0 ? numTranslations : -1);
-                        } else {
-                            ++c;
-                        }
-                    }
-                }
-
-                for (int i : std::as_const(placeMarkerIndexes)) {
-                    if (i != 0) {
-                        if (verbose)
-                            m_errorsView->addError(mi, ErrorsView::PlaceMarkersDiffer);
-                        danger = true;
-                        break;
-                    }
-                }
-
-                // Piggy-backed on the general place markers, we check the plural count marker.
-                if (m->message().isPlural()) {
-                    for (int i = 0; i < numTranslations; ++i)
-                        if (m_dataModel->model(mi)->countRefNeeds().at(i)
-                            && !(translations[i].contains("%n"_L1)
-                                 || translations[i].contains("%Ln"_L1))) {
-                            if (verbose)
-                                m_errorsView->addError(mi, ErrorsView::NumerusMarkerMissing);
-                            danger = true;
-                            break;
-                        }
+                    translation.slice(std::min(sep + 1, translation.size()));
                 }
             }
         }
