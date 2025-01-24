@@ -1904,9 +1904,8 @@ void MainWindow::setupMenuBar()
     connect(m_ui.actionPrev, &QAction::triggered, this, &MainWindow::prev);
     connect(m_ui.actionDone, &QAction::triggered, this, &MainWindow::done);
     connect(m_ui.actionDoneAndNext, &QAction::triggered, this, &MainWindow::doneAndNext);
-    connect(m_ui.actionBeginFromSource, &QAction::triggered, m_messageEditor, &MessageEditor::beginFromSource);
-    connect(m_messageEditor, &MessageEditor::beginFromSourceAvailable,
-            m_ui.actionBeginFromSource, &QAction::setEnabled);
+    connect(m_ui.actionBeginFromSource, &QAction::triggered, m_messageEditor,
+            &MessageEditor::beginFromSource);
 
     // Phrasebook menu
     connect(m_ui.actionNewPhraseBook, &QAction::triggered, this, &MainWindow::newPhraseBook);

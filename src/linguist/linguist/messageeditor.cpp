@@ -550,7 +550,6 @@ void MessageEditor::trackFocus(QWidget *widget)
         m_currentModel = model;
         m_currentNumerus = numerus;
         emit activeModelChanged(activeModel());
-        updateBeginFromSource();
         updateUndoRedo();
 #ifndef QT_NO_CLIPBOARD
         updateCanPaste();
@@ -574,7 +573,6 @@ void MessageEditor::showNothing()
 #ifndef QT_NO_CLIPBOARD
     emit pasteAvailable(false);
 #endif
-    updateBeginFromSource();
     updateUndoRedo();
 }
 
@@ -678,8 +676,6 @@ void MessageEditor::setNumerusTranslation(int model, const QString &translation,
         numerus = 0;
     FormMultiWidget *transForm = ed.transTexts[numerus];
     transForm->setTranslation(translation, false);
-
-    updateBeginFromSource();
 }
 
 void MessageEditor::setTranslation(int latestModel, const QString &translation)
@@ -694,8 +690,6 @@ void MessageEditor::setTranslation(int latestModel, const QString &translation)
     FormMultiWidget *transForm = m_editors[latestModel].transTexts[numerus];
     transForm->getEditors().first()->setFocus();
     transForm->setTranslation(translation, true);
-
-    updateBeginFromSource();
 }
 
 void MessageEditor::setEditingEnabled(int model, bool enabled)
@@ -813,7 +807,6 @@ void MessageEditor::selectAll()
 void MessageEditor::emitTranslationChanged(QTextEdit *widget)
 {
     grabFocus(widget); // DND proofness
-    updateBeginFromSource();
     updateUndoRedo();
     emit translationChanged(translations(m_currentModel));
 }
@@ -825,17 +818,10 @@ void MessageEditor::emitTranslatorCommentChanged(QTextEdit *widget)
     emit translatorCommentChanged(m_editors[m_currentModel].transCommentText->getTranslation());
 }
 
-void MessageEditor::updateBeginFromSource()
-{
-    bool overwrite = false;
-    if (QTextEdit *activeEditor = activeTranslation())
-        overwrite = !activeEditor->isReadOnly()
-            && activeEditor->toPlainText().trimmed().isEmpty();
-    emit beginFromSourceAvailable(overwrite);
-}
-
 void MessageEditor::beginFromSource()
 {
+    if (m_currentModel < 0 || m_currentIndex.model() < 0)
+        return;
     MessageItem *item = m_dataModel->messageItem(m_currentIndex, m_currentModel);
     setTranslation(m_currentModel,
                    m_currentNumerus > 0 && !item->pluralText().isEmpty() ?
@@ -858,7 +844,6 @@ void MessageEditor::setEditorFocusForModel(int model)
             m_currentModel = -1;
             m_focusWidget = 0;
             emit activeModelChanged(activeModel());
-            updateBeginFromSource();
             updateUndoRedo();
 #ifndef QT_NO_CLIPBOARD
             updateCanPaste();
