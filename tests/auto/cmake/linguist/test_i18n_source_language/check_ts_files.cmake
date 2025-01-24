@@ -29,7 +29,7 @@ function(check_ts_file ts_file)
     endforeach()
 
     set(forbidden_strings
-        "<source>We must not see this in the native language"
+        "<source>We must not see this in the source language"
     )
     foreach(needle IN LISTS forbidden_strings)
         string(FIND "${ts_file_content}" "${needle}" pos)
