@@ -210,7 +210,8 @@ static void writeComment(QTextStream &ts, const TranslatorMessage &msg, const QR
 static void writeTransUnits(QTextStream &ts, const TranslatorMessage &msg, const QRegularExpression &drops, int indent)
 {
     static int msgid;
-    QString msgidstr = !msg.id().isEmpty() ? msg.id() : QString::fromLatin1("_msg%1").arg(++msgid);
+    QString msgidstr =
+            !msg.id().isEmpty() ? xlProtect(msg.id()) : QString::fromLatin1("_msg%1").arg(++msgid);
 
     QStringList translns = msg.translations();
     QString pluralStr;
