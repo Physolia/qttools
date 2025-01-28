@@ -2062,11 +2062,14 @@ void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStac
                 maybeInTrailingReturnType = true;
             yyTok = getToken();
             if (yyTok == Tok_Ident) {
-                switch (trFunctionAliasManager.trFunctionByName(yyWord)) {
-                case TrFunctionAliasManager::Function_tr:
-                case TrFunctionAliasManager::Function_trUtf8:
-                    yyMsg() << "Cannot invoke tr() like this\n";
-                    break;
+                yyTok = getToken();
+                if (yyTok == Tok_LeftParen) {
+                    switch (trFunctionAliasManager.trFunctionByName(yyWord)) {
+                    case TrFunctionAliasManager::Function_tr:
+                    case TrFunctionAliasManager::Function_trUtf8:
+                        yyMsg() << "Cannot invoke tr() like this\n";
+                        break;
+                    }
                 }
             }
             break;
