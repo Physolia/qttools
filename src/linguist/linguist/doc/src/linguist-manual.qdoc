@@ -256,6 +256,9 @@
         \li \c {-no-sort}
         \li Do not sort contexts in TS files.
     \row
+        \li \c {-sort-messages}
+        \li Sort messages in a context alphabetically in TS files.
+    \row
         \li \c {-no-recursive}
         \li Do not recursively scan directories.
     \row

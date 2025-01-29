@@ -528,6 +528,13 @@ bool saveTS(const Translator &translator, QIODevice &dev, ConversionData &cd)
     }
     if (cd.sortContexts())
         std::sort(contextOrder.begin(), contextOrder.end());
+    if (cd.sortMessages()) {
+        auto messageComparator = [](const TranslatorMessage &m1, const TranslatorMessage &m2) {
+            return m1.sourceText() < m2.sourceText();
+        };
+        for (QList<TranslatorMessage> &contextMessages : messageOrder)
+            std::sort(contextMessages.begin(), contextMessages.end(), messageComparator);
+    }
 
     QHash<QString, int> currentLine;
     QString currentFile;

@@ -263,6 +263,8 @@ static void printUsage()
         "           Do not explain what is being done.\n"
         "    -no-sort\n"
         "           Do not sort contexts in TS files.\n"
+        "    -sort-messages\n"
+        "           Sort messages in a context alphabetically in TS files.\n"
         "    -no-recursive\n"
         "           Do not recursively scan directories.\n"
         "    -recursive\n"
@@ -396,6 +398,7 @@ static void updateTsFiles(const Translator &fetchedTor, const QStringList &tsFil
         ConversionData cd;
         Translator tor;
         cd.m_sortContexts = !(options & NoSort);
+        cd.m_sortMessages = options & SortMessages;
         if (QFile(fileName).exists()) {
             if (!tor.load(fileName, cd, QLatin1String("auto"))) {
                 printErr(cd.error());
@@ -928,6 +931,9 @@ int main(int argc, char **argv)
         } else if (arg == QLatin1String("-no-sort")
                    || arg == QLatin1String("-nosort")) {
             options |= NoSort;
+            continue;
+        } else if (arg == QLatin1String("-sort-messages")) {
+            options |= SortMessages;
             continue;
         } else if (arg == QLatin1String("-version")) {
             printOut(QStringLiteral("lupdate version %1\n").arg(QLatin1String(QT_VERSION_STR)));

@@ -69,6 +69,8 @@ static int usage(const QStringList &args)
         "           Drop untranslated messages.\n\n"
         "    -sort-contexts\n"
         "           Sort contexts in output TS file alphabetically.\n\n"
+        "    -sort-messages\n"
+        "           Sort messages in a context alphabetically in TS files.\n\n"
         "    -locations {absolute|relative|none}\n"
         "           Override how source code references are saved in TS files.\n"
         "           Default is absolute.\n\n"
@@ -179,6 +181,8 @@ int main(int argc, char *argv[])
             noUntranslated = true;
         } else if (args[i] == QLatin1String("-sort-contexts")) {
             cd.m_sortContexts = true;
+        } else if (args[i] == QLatin1String("-sort-messages")) {
+            cd.m_sortMessages = true;
         } else if (args[i] == QLatin1String("-locations")) {
             if (++i >= args.size())
                 return usage(args);
