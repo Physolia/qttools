@@ -118,10 +118,10 @@ QByteArrayList getIncludePathsFromCompiler()
         = fiCompiler.fileName();
 #endif
 
-    if (compilerName == QLatin1String("cl"))
+    if (compilerName == "cl"_L1)
         return getMSVCIncludePathsFromEnvironment();
 
-    if (compilerName != QLatin1String("gcc") && compilerName != QLatin1String("clang++")) {
+    if (compilerName != "gcc"_L1 && compilerName != "clang++"_L1) {
         qWarning("lupdate: Unknown compiler %s", qPrintable(compiler));
         return pathList;
     }
@@ -331,30 +331,30 @@ static bool generateCompilationDatabase(const QString &outputFilePath, const Con
 {
     QJsonArray commandObjects;
     const QString buildDir = QDir::currentPath();
-    const QString fakefileName = QLatin1String("dummmy.cpp");
+    const QString fakefileName = "dummmy.cpp"_L1;
     QJsonObject obj;
-    obj[QLatin1String("file")] = fakefileName;
-    obj[QLatin1String("directory")] = buildDir;
+    obj["file"_L1] = fakefileName;
+    obj["directory"_L1] = buildDir;
     QJsonArray args = {
-            QLatin1String("clang++"),
-            QLatin1String("-std=gnu++17"),
-    #ifndef Q_OS_WIN
-            QLatin1String("-fPIC"),
-    #endif
-        };
+        "clang++"_L1,
+        "-std=gnu++17"_L1,
+#ifndef Q_OS_WIN
+        "-fPIC"_L1,
+#endif
+    };
 
 #if defined(Q_OS_MACOS) && QT_CONFIG(framework)
         const QString installPath = QLibraryInfo::path(QLibraryInfo::LibrariesPath);
-        QString arg =  QLatin1String("-F") + installPath;
+        QString arg = "-F"_L1 + installPath;
         args.push_back(arg);
 #endif
 
     for (const QString &path : cd.m_includePath) {
-            QString arg = QLatin1String("-I") + path;
-            args.push_back(std::move(arg));
+        QString arg = "-I"_L1 + path;
+        args.push_back(std::move(arg));
     }
 
-    obj[QLatin1String("arguments")] = args;
+    obj["arguments"_L1] = args;
     commandObjects.append(obj);
 
     QJsonDocument doc(commandObjects);

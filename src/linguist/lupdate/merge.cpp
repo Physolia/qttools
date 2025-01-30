@@ -14,6 +14,8 @@
 
 QT_BEGIN_NAMESPACE
 
+using namespace Qt::Literals::StringLiterals;
+
 /*
   Augments a Translator with trivially derived translations.
 
@@ -160,9 +162,9 @@ Translator merge(
                   outdateSource:
                     m.setOldSourceText(m.sourceText());
                     m.setSourceText(mv->sourceText());
-                    const QString &oldpluralsource = m.extra(QLatin1String("po-msgid_plural"));
+                    const QString &oldpluralsource = m.extra("po-msgid_plural"_L1);
                     if (!oldpluralsource.isEmpty())
-                        extras.insert(QLatin1String("po-old_msgid_plural"), oldpluralsource);
+                        extras.insert("po-old_msgid_plural"_L1, oldpluralsource);
                 }
             } else {
                 switch (m.type()) {

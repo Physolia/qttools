@@ -77,9 +77,9 @@ Options:
 static bool loadTsFile(Translator &tor, const QString &tsFileName, bool /* verbose */)
 {
     ConversionData cd;
-    bool ok = tor.load(tsFileName, cd, QLatin1String("auto"));
+    bool ok = tor.load(tsFileName, cd, "auto"_L1);
     if (!ok) {
-        printErr(QLatin1String("lrelease error: %1").arg(cd.error()));
+        printErr("lrelease error: %1"_L1.arg(cd.error()));
     } else {
         if (!cd.errors().isEmpty())
             printOut(cd.error());
@@ -94,18 +94,16 @@ static bool releaseTranslator(Translator &tor, const QString &qmFileName,
     tor.reportDuplicates(tor.resolveDuplicates(), qmFileName, cd.isVerbose());
 
     if (cd.isVerbose())
-        printOut(QLatin1String("Updating '%1'...\n").arg(qmFileName));
+        printOut("Updating '%1'...\n"_L1.arg(qmFileName));
     if (removeIdentical) {
         if (cd.isVerbose())
-            printOut(QLatin1String("Removing translations equal to source text in '%1'...\n")
-                             .arg(qmFileName));
+            printOut("Removing translations equal to source text in '%1'...\n"_L1.arg(qmFileName));
         tor.stripIdenticalSourceTranslations();
     }
 
     QFile file(qmFileName);
     if (!file.open(QIODevice::WriteOnly)) {
-        printErr(QLatin1String("lrelease error: cannot create '%1': %2\n")
-                         .arg(qmFileName, file.errorString()));
+        printErr("lrelease error: cannot create '%1': %2\n"_L1.arg(qmFileName, file.errorString()));
         return false;
     }
 
@@ -114,7 +112,7 @@ static bool releaseTranslator(Translator &tor, const QString &qmFileName,
     file.close();
 
     if (!ok) {
-        printErr(QLatin1String("lrelease error: cannot save '%1': %2").arg(qmFileName, cd.error()));
+        printErr("lrelease error: cannot save '%1': %2"_L1.arg(qmFileName, cd.error()));
     } else if (!cd.errors().isEmpty()) {
         printOut(cd.error());
     }
@@ -131,12 +129,12 @@ static bool releaseTsFile(const QString& tsFileName,
 
     QString qmFileName = tsFileName;
     for (const Translator::FileFormat &fmt : std::as_const(Translator::registeredFileFormats())) {
-        if (qmFileName.endsWith(QLatin1Char('.') + fmt.extension)) {
+        if (qmFileName.endsWith(u'.' + fmt.extension)) {
             qmFileName.chop(fmt.extension.size() + 1);
             break;
         }
     }
-    qmFileName += QLatin1String(".qm");
+    qmFileName += ".qm"_L1;
 
     return releaseTranslator(tor, qmFileName, cd, removeIdentical);
 }
@@ -150,9 +148,8 @@ static QStringList translationsFromProject(const Project &project, bool topLevel
         result = *project.translations;
     result << translationsFromProjects(project.subProjects, false);
     if (topLevel && result.isEmpty()) {
-        printErr(
-            QLatin1String("lrelease warning: Met no 'TRANSLATIONS' entry in project file '%1'\n")
-            .arg(project.filePath));
+        printErr("lrelease warning: Met no 'TRANSLATIONS' entry in project file '%1'\n"_L1.arg(
+                project.filePath));
     }
     return result;
 }
@@ -178,60 +175,61 @@ int main(int argc, char **argv)
     QString projectDescriptionFile;
 
     for (int i = 1; i < argc; ++i) {
-        if (!strcmp(argv[i], "-compress")) {
+        const char *arg = argv[i];
+        if (!strcmp(arg, "-compress")) {
             cd.m_saveMode = SaveStripped;
             continue;
-        } else if (!strcmp(argv[i], "-idbased")) {
+        } else if (!strcmp(arg, "-idbased")) {
             cd.m_idBased = true;
             continue;
-        } else if (!strcmp(argv[i], "-nocompress")) {
+        } else if (!strcmp(arg, "-nocompress")) {
             cd.m_saveMode = SaveEverything;
             continue;
-        } else if (!strcmp(argv[i], "-removeidentical")) {
+        } else if (!strcmp(arg, "-removeidentical")) {
             removeIdentical = true;
             continue;
-        } else if (!strcmp(argv[i], "-nounfinished")) {
+        } else if (!strcmp(arg, "-nounfinished")) {
             cd.m_ignoreUnfinished = true;
             continue;
-        } else if (!strcmp(argv[i], "-markuntranslated")) {
+        } else if (!strcmp(arg, "-markuntranslated")) {
             if (i == argc - 1) {
                 printUsage();
                 return 1;
             }
             cd.m_unTrPrefix = QString::fromLocal8Bit(argv[++i]);
-        } else if (!strcmp(argv[i], "-project")) {
+        } else if (!strcmp(arg, "-project")) {
             if (i == argc - 1) {
-                printErr(QLatin1String("The option -project requires a parameter.\n"));
+                printErr("The option -project requires a parameter.\n"_L1);
                 return 1;
             }
             if (!projectDescriptionFile.isEmpty()) {
-                printErr(QLatin1String("The option -project must appear only once.\n"));
+                printErr("The option -project must appear only once.\n"_L1);
                 return 1;
             }
             projectDescriptionFile = QString::fromLocal8Bit(argv[++i]);
-        } else if (!strcmp(argv[i], "-silent")) {
+        } else if (!strcmp(arg, "-silent")) {
             cd.m_verbose = false;
             continue;
-        } else if (!strcmp(argv[i], "-verbose")) {
+        } else if (!strcmp(arg, "-verbose")) {
             cd.m_verbose = true;
             continue;
-        } else if (!strcmp(argv[i], "-version")) {
-            printOut(QLatin1String("lrelease version %1\n").arg(QLatin1String(QT_VERSION_STR)));
+        } else if (!strcmp(arg, "-version")) {
+            printOut("lrelease version %1\n"_L1.arg(QLatin1StringView(QT_VERSION_STR)));
             return 0;
-        } else if (!strcmp(argv[i], "-qm")) {
+        } else if (!strcmp(arg, "-qm")) {
             if (i == argc - 1) {
                 printUsage();
                 return 1;
             }
             outputFile = QString::fromLocal8Bit(argv[++i]);
-        } else if (!strcmp(argv[i], "-help")) {
+        } else if (!strcmp(arg, "-help")) {
             printUsage();
             return 0;
-        } else if (argv[i][0] == '-') {
+        } else if (arg[0] == '-') {
             printUsage();
             return 1;
         } else {
-            inputFiles << QString::fromLocal8Bit(argv[i]);
+            inputFiles << QString::fromLocal8Bit(arg);
         }
     }
 
@@ -242,7 +240,7 @@ int main(int argc, char **argv)
 
     QString errorString;
     if (!extractProFiles(&inputFiles).isEmpty()) {
-        runInternalQtTool(QLatin1String("lrelease-pro"), app.arguments().mid(1));
+        runInternalQtTool("lrelease-pro"_L1, app.arguments().mid(1));
         return 0;
     }
 
@@ -254,7 +252,7 @@ int main(int argc, char **argv)
         }
         Projects projectDescription = readProjectDescription(projectDescriptionFile, &errorString);
         if (!errorString.isEmpty()) {
-            printErr(QLatin1String("lrelease error: %1\n").arg(errorString));
+            printErr("lrelease error: %1\n"_L1.arg(errorString));
             return 1;
         }
         inputFiles = translationsFromProjects(projectDescription);

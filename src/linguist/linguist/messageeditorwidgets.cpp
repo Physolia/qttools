@@ -24,6 +24,8 @@
 
 QT_BEGIN_NAMESPACE
 
+using namespace Qt::Literals::StringLiterals;
+
 ExpandingTextEdit::ExpandingTextEdit(QWidget *parent)
     : QTextEdit(parent)
 {
@@ -232,11 +234,11 @@ protected:
 };
 
 FormMultiWidget::FormMultiWidget(const QString &label, QWidget *parent)
-        : QWidget(parent),
-          m_hideWhenEmpty(false),
-          m_multiEnabled(false),
-          m_plusIcon(QIcon(QLatin1String(":/images/plus.png"))),  // make static
-          m_minusIcon(QIcon(QLatin1String(":/images/minus.png")))
+    : QWidget(parent),
+      m_hideWhenEmpty(false),
+      m_multiEnabled(false),
+      m_plusIcon(QIcon(":/images/plus.png"_L1)), // make static
+      m_minusIcon(QIcon(":/images/minus.png"_L1))
 {
     m_label = new QLabel(this);
     QFont fnt;
@@ -382,7 +384,7 @@ void FormMultiWidget::setTranslation(const QString &text, bool userAction)
 }
 
 // Copied from QTextDocument::toPlainText() and modified to
-// not replace QChar::Nbsp with QLatin1Char(' ')
+// not replace QChar::Nbsp with u' '
 QString toPlainText(const QString &text)
 {
     QString txt = text;
@@ -395,7 +397,7 @@ QString toPlainText(const QString &text)
         case 0xfdd1: // QTextEndOfFrame
         case QChar::ParagraphSeparator:
         case QChar::LineSeparator:
-            *uc = QLatin1Char('\n');
+            *uc = u'\n';
             break;
         }
     }

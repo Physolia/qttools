@@ -87,7 +87,7 @@ protected:
         while (base && base->kind == AST::Node::Kind_FieldMemberExpression) {
             auto memberExpr = static_cast<AST::FieldMemberExpression *>(base);
             name.prepend(memberExpr->name);
-            name.prepend(QLatin1Char('.'));
+            name.prepend(u'.');
             base = memberExpr->base;
         }
 
@@ -269,8 +269,8 @@ private:
 QString createErrorString(const QString &filename, const QString &code, Parser &parser)
 {
     // print out error
-    QStringList lines = code.split(QLatin1Char('\n'));
-    lines.append(QLatin1String("\n")); // sentinel.
+    QStringList lines = code.split(u'\n');
+    lines.append("\n"_L1); // sentinel.
     QString errorString;
 
     const auto messages = parser.diagnosticMessages();
@@ -281,20 +281,19 @@ QString createErrorString(const QString &filename, const QString &code, Parser &
 
         const int line = m.loc.startLine;
         const int column = m.loc.startColumn;
-        QString error = filename + QLatin1Char(':')
-                        + QString::number(line) + QLatin1Char(':') + QString::number(column)
-                        + QLatin1String(": error: ") + m.message + QLatin1Char('\n');
+        QString error = filename + u':' + QString::number(line) + u':' + QString::number(column)
+                + ": error: "_L1 + m.message + u'\n';
 
         const QString textLine = lines.at(line > 0 ? line - 1 : 0);
-        error += textLine + QLatin1Char('\n');
+        error += textLine + u'\n';
         for (int i = 0, end = qMin(column > 0 ? column - 1 : 0, textLine.size()); i < end; ++i) {
             const QChar ch = textLine.at(i);
             if (ch.isSpace())
                 error += ch;
             else
-                error += QLatin1Char(' ');
+                error += u' ';
         }
-        error += QLatin1String("^\n");
+        error += "^\n"_L1;
         errorString += error;
     }
     return errorString;
@@ -342,24 +341,24 @@ void FindTrCalls::processComment(const SourceLocation &loc)
     const int length = commentStr.size();
 
     // Try to match the logic of the C++ parser.
-    if (*chars == QLatin1Char(':') && chars[1].isSpace()) {
+    if (*chars == u':' && chars[1].isSpace()) {
         if (!extracomment.isEmpty())
-            extracomment += QLatin1Char(' ');
+            extracomment += u' ';
         extracomment += QString(chars+2, length-2);
-    } else if (*chars == QLatin1Char('=') && chars[1].isSpace()) {
+    } else if (*chars == u'=' && chars[1].isSpace()) {
         msgid = QString(chars+2, length-2).simplified();
-    } else if (*chars == QLatin1Char('~') && chars[1].isSpace()) {
+    } else if (*chars == u'~' && chars[1].isSpace()) {
         QString text = QString(chars+2, length-2).trimmed();
-        int k = text.indexOf(QLatin1Char(' '));
+        int k = text.indexOf(u' ');
         if (k > -1) {
             QString commentvalue = text.mid(k + 1).trimmed();
-            if (commentvalue.startsWith(QLatin1Char('"')) && commentvalue.endsWith(QLatin1Char('"'))
-               && commentvalue.size() != 1) {
-               commentvalue = commentvalue.sliced(1, commentvalue.size() - 2);
+            if (commentvalue.startsWith(u'"') && commentvalue.endsWith(u'"')
+                && commentvalue.size() != 1) {
+                commentvalue = commentvalue.sliced(1, commentvalue.size() - 2);
             }
             extra.insert(text.left(k), commentvalue);
         }
-    } else if (*chars == QLatin1Char('%') && chars[1].isSpace()) {
+    } else if (*chars == u'%' && chars[1].isSpace()) {
         sourcetext.reserve(sourcetext.size() + length-2);
         ushort *ptr = (ushort *)sourcetext.data() + sourcetext.size();
         int p = 2, c;

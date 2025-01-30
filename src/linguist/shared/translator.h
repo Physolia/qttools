@@ -35,7 +35,7 @@ public:
     bool sortMessages() const { return m_sortMessages; }
 
     void appendError(const QString &error) { m_errors.append(error); }
-    QString error() const { return m_errors.isEmpty() ? QString() : m_errors.join(QLatin1Char('\n')) + QLatin1Char('\n'); }
+    QString error() const { return m_errors.isEmpty() ? QString() : m_errors.join(u'\n') + u'\n'; }
     QStringList errors() const { return  m_errors; }
     void clearErrors() { m_errors.clear(); }
 

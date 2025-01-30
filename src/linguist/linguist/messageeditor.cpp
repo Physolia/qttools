@@ -28,6 +28,8 @@
 
 QT_BEGIN_NAMESPACE
 
+using namespace Qt::Literals::StringLiterals;
+
 /*
    MessageEditor class impl.
 
@@ -48,7 +50,7 @@ MessageEditor::MessageEditor(MultiDataModel *dataModel, QMainWindow *parent)
       m_selectionHolder(0),
       m_focusWidget(0)
 {
-    setObjectName(QLatin1String("scroll area"));
+    setObjectName("scroll area"_L1);
 
     QPalette p;
     p.setBrush(QPalette::Window, p.brush(QPalette::Active, QPalette::Base));
@@ -108,7 +110,7 @@ void MessageEditor::setupEditorPage()
 
     m_commentText = new FormWidget(tr("Developer comments"), false);
     m_commentText->setHideWhenEmpty(true);
-    m_commentText->setObjectName(QLatin1String("comment/context view"));
+    m_commentText->setObjectName("comment/context view"_L1);
     m_commentText->setWhatsThis(tr("This area shows a comment that"
                         " may guide you, and the context in which the text"
                         " occurs.") );
@@ -631,7 +633,7 @@ void MessageEditor::showMessage(const MultiDataIndex &index)
                 QString toolTip = tr("'%1'\nLine: %2").arg(item->fileName(), QString::number(item->lineNumber()));
                 m_source->setToolTip(toolTip);
             } else {
-                m_source->setToolTip(QLatin1String(""));
+                m_source->setToolTip({});
             }
 
             // Comment field
@@ -639,7 +641,7 @@ void MessageEditor::showMessage(const MultiDataIndex &index)
 
             if (!item->extraComment().isEmpty()) {
                 if (!commentText.isEmpty())
-                    commentText += QLatin1String("\n");
+                    commentText += u'\n';
                 commentText += item->extraComment().simplified();
             }
 

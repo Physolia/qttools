@@ -63,18 +63,17 @@ bool UiReader::startElement(QStringView namespaceURI, QStringView localName,
     Q_UNUSED(namespaceURI);
     Q_UNUSED(localName);
 
-    if (qName == QLatin1String("string")) {
+    if (qName == "string"_L1) {
         flush();
         if (!m_insideStringList)
             readTranslationAttributes(atts);
-    } else if (qName == QLatin1String("stringlist")) {
+    } else if (qName == "stringlist"_L1) {
         flush();
         m_insideStringList = true;
         readTranslationAttributes(atts);
-    } else if (qName == QLatin1String("ui")) { // UI "header"
+    } else if (qName == "ui"_L1) { // UI "header"
         const auto attr = QStringLiteral("idbasedtr");
-        m_idBasedTranslations =
-                atts.hasAttribute(attr) && atts.value(attr) == QLatin1String("true");
+        m_idBasedTranslations = atts.hasAttribute(attr) && atts.value(attr) == "true"_L1;
     }
     m_accum.clear();
     return true;
@@ -86,17 +85,17 @@ bool UiReader::endElement(QStringView namespaceURI, QStringView localName,
     Q_UNUSED(namespaceURI);
     Q_UNUSED(localName);
 
-    m_accum.replace(QLatin1String("\r\n"), QLatin1String("\n"));
+    m_accum.replace("\r\n"_L1, "\n"_L1);
 
-    if (qName == QLatin1String("class")) { // UI "header"
+    if (qName == "class"_L1) { // UI "header"
         if (m_context.isEmpty())
             m_context = m_accum;
-    } else if (qName == QLatin1String("string") && m_isTrString) {
+    } else if (qName == "string"_L1 && m_isTrString) {
         m_source = m_accum;
-    } else if (qName == QLatin1String("comment")) { // FIXME: what's that?
+    } else if (qName == "comment"_L1) { // FIXME: what's that?
         m_comment = m_accum;
         flush();
-    } else if (qName == QLatin1String("stringlist")) {
+    } else if (qName == "stringlist"_L1) {
         m_insideStringList = false;
     } else {
         flush();

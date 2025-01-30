@@ -20,13 +20,15 @@ static bool isLight(const QColor &textColor)
 }
 } // namespace
 
+using namespace Qt::Literals::StringLiterals;
+
 QT_BEGIN_NAMESPACE
 
 const QString &settingsPrefix()
 {
-    static QString prefix = QString(QLatin1String("%1.%2/"))
-        .arg((QT_VERSION >> 16) & 0xff)
-        .arg((QT_VERSION >> 8) & 0xff);
+
+    static QString prefix =
+            QString::number(QT_VERSION_MAJOR) + u'.' + QString::number(QT_VERSION_MINOR) + u'/';
     return prefix;
 }
 

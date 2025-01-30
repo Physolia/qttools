@@ -17,6 +17,8 @@
 
 QT_BEGIN_NAMESPACE
 
+using namespace Qt::Literals::StringLiterals;
+
 // magic number for the file
 static const int MagicLength = 16;
 static const uchar magic[MagicLength] = {
@@ -438,7 +440,7 @@ bool loadQM(Translator &translator, QIODevice &dev, ConversionData &cd)
     const uchar *data = (uchar*)ba.data();
     int len = ba.size();
     if (len < MagicLength || memcmp(data, magic, MagicLength) != 0) {
-        cd.appendError(QLatin1String("QM-Format error: magic marker missing"));
+        cd.appendError("QM-Format error: magic marker missing"_L1);
         return false;
     }
 
@@ -496,7 +498,7 @@ bool loadQM(Translator &translator, QIODevice &dev, ConversionData &cd)
     size_t numItems = offsetLength / (2 * sizeof(quint32));
     //qDebug() << "NUMITEMS: " << numItems;
 
-    QString strProN = QLatin1String("%n");
+    QString strProN = "%n"_L1;
     QLocale::Language l;
     QLocale::Territory c;
     Translator::languageAndTerritory(translator.languageCode(), &l, &c);
@@ -527,7 +529,7 @@ bool loadQM(Translator &translator, QIODevice &dev, ConversionData &cd)
                 // -1 indicates an empty string
                 // Otherwise streaming format is UTF-16 -> 2 bytes per character
                 if ((len != -1) && (len & 1)) {
-                    cd.appendError(QLatin1String("QM-Format error"));
+                    cd.appendError("QM-Format error"_L1);
                     return false;
                 }
                 QString str;
@@ -598,7 +600,7 @@ bool loadQM(Translator &translator, QIODevice &dev, ConversionData &cd)
         translator.append(msg);
     }
     if (utf8Fail) {
-        cd.appendError(QLatin1String("Error: File contains invalid UTF-8 sequences."));
+        cd.appendError("Error: File contains invalid UTF-8 sequences."_L1);
         return false;
     }
     return ok;
@@ -706,7 +708,7 @@ int initQM()
 {
     Translator::FileFormat format;
 
-    format.extension = QLatin1String("qm");
+    format.extension = "qm"_L1;
     format.untranslatedDescription = QT_TRANSLATE_NOOP("FMT", "Compiled Qt translations");
     format.fileType = Translator::FileFormat::TranslationBinary;
     format.priority = 0;

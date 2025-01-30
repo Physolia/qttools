@@ -989,7 +989,7 @@ QString CppParser::stringifyNamespace(int start, const NamespaceList &namespaces
     ret.reserve(l + qMax(0, (namespaces.size() - start - 1)) * 2);
     for (int i = start; i < namespaces.size(); ++i) {
         if (i > start)
-            ret += QLatin1String("::");
+            ret += "::"_L1;
         ret += namespaces.at(i).value();
     }
     return ret;
@@ -1165,10 +1165,8 @@ bool CppParser::fullyQualify(const NamespaceList &namespaces,
                              const QString &quali, bool isDeclaration,
                              NamespaceList *resolved, NamespaceList *unresolved) const
 {
-    static QString strColons(QLatin1String("::"));
-
     NamespaceList segments;
-    for (const QString &str : quali.split(strColons)) // XXX slow, but needs to be fast(?)
+    for (const QString &str : quali.split("::"_L1)) // XXX slow, but needs to be fast(?)
         segments << HashString(str);
     return fullyQualify(namespaces, segments, isDeclaration, resolved, unresolved);
 }
@@ -1316,7 +1314,7 @@ void CppFiles::addIncludeCycle(const QSet<QString> &fileNames, const CppParserSt
 static bool isHeader(const QString &name)
 {
     QString fileExt = QFileInfo(name).suffix();
-    return fileExt.isEmpty() || fileExt.startsWith(QLatin1Char('h'), Qt::CaseInsensitive);
+    return fileExt.isEmpty() || fileExt.startsWith(u'h', Qt::CaseInsensitive);
 }
 
 void CppParser::processInclude(const QString &file, ConversionData &cd, const QStringList &includeStack,
@@ -1546,7 +1544,7 @@ void CppParser::handleTr(QString &prefix, bool plural)
                 plural = true;
             }
         }
-        if (!pendingContext.isEmpty() && !prefix.startsWith(QLatin1String("::"))) {
+        if (!pendingContext.isEmpty() && !prefix.startsWith("::"_L1)) {
             NamespaceList unresolved;
             if (!fullyQualify(namespaces, pendingContext, true, &functionContext, &unresolved)) {
                 functionContextUnresolved = stringifyNamespace(0, unresolved);
@@ -1583,7 +1581,7 @@ void CppParser::handleTr(QString &prefix, bool plural)
                         context += functionContext.at(i).value();
                         if (++i == idx)
                             break;
-                        context += QLatin1String("::");
+                        context += "::"_L1;
                     }
                     fctx->trQualification = context;
                 } else {
@@ -1710,7 +1708,7 @@ void CppParser::handleDeclareTrFunctions()
             break;
         if (yyTok != Tok_ColonColon)
             return;
-        name += QLatin1String("::");
+        name += "::"_L1;
     }
     Namespace *ns = modifyNamespace(&namespaces);
     ns->hasTrFunctions = true;
@@ -1775,7 +1773,7 @@ bool CppParser::parseTranslate(QString &prefix)
 void CppParser::parseInternal(ConversionData &cd, const QStringList &includeStack,
                               QSet<QString> &inclusions)
 {
-    static QString strColons(QLatin1String("::"));
+    static constexpr auto strColons("::"_L1);
 
     QString prefix;
     bool yyTokColonSeen = false; // Start of c'tor's initializer list
@@ -2242,28 +2240,28 @@ void CppParser::processComment()
         return;
 
     const QChar *ptr = yyWord.unicode();
-    if (*ptr == QLatin1Char(':') && ptr[1].isSpace()) {
+    if (*ptr == u':' && ptr[1].isSpace()) {
         yyWord.remove(0, 2);
         extracomment += yyWord;
         extracomment.detach();
-    } else if (*ptr == QLatin1Char('=') && ptr[1].isSpace()) {
+    } else if (*ptr == u'=' && ptr[1].isSpace()) {
         yyWord.remove(0, 2);
         msgid = yyWord.simplified();
         msgid.detach();
-    } else if (*ptr == QLatin1Char('~') && ptr[1].isSpace()) {
+    } else if (*ptr == u'~' && ptr[1].isSpace()) {
         yyWord.remove(0, 2);
         text = yyWord.trimmed();
-        int k = text.indexOf(QLatin1Char(' '));
+        int k = text.indexOf(u' ');
         if (k > -1) {
             QString commentvalue = text.mid(k + 1).trimmed();
-            if (commentvalue.startsWith(QLatin1Char('"')) && commentvalue.endsWith(QLatin1Char('"'))
+            if (commentvalue.startsWith(u'"') && commentvalue.endsWith(u'"')
                 && commentvalue.size() != 1) {
                 commentvalue = commentvalue.sliced(1, commentvalue.size() - 2);
             }
             extra.insert(text.left(k), commentvalue);
         }
         text.clear();
-    } else if (*ptr == QLatin1Char('%') && ptr[1].isSpace()) {
+    } else if (*ptr == u'%' && ptr[1].isSpace()) {
         sourcetext.reserve(sourcetext.size() + yyWord.size() - 2);
         ushort *ptr = (ushort *)sourcetext.data() + sourcetext.size();
         int p = 2, c;
@@ -2308,7 +2306,7 @@ void CppParser::processComment()
             idx += CppMagicComment.size();
             comment = QString::fromRawData(yyWord.unicode() + idx,
                                            yyWord.size() - idx).simplified();
-            int k = comment.indexOf(QLatin1Char(' '));
+            int k = comment.indexOf(u' ');
             if (k == -1) {
                 context = comment;
             } else {

@@ -208,7 +208,7 @@ namespace LupdatePrivate
     {
 #ifdef Q_OS_WIN
         QString result = s;
-        result.replace(QLatin1String("\r\n"), QLatin1String("\n"));
+        result.replace(QLatin1StringView("\r\n"), QLatin1StringView("\n"));
         return result;
 #else
         return s;
@@ -252,12 +252,12 @@ namespace LupdatePrivate
             return {};
 
         const QString string = fixedLineEndings(QString::fromStdString(token).trimmed());
-        const int index = string.indexOf(QLatin1Char('"'));
+        const int index = string.indexOf(u'"');
         if (index <= 0)
             return LupdatePrivate::cleanQuote(token, QuoteCompulsary::LeftAndRight);
 
         QRegularExpressionMatch result;
-        if (string.at(index - 1) == QLatin1Char('R')) {
+        if (string.at(index - 1) == u'R') {
             static const QRegularExpression rawStringLiteral {
                 QStringLiteral(
                     "(?:\\bu8|\\b[LuU])??R\\\"([^\\(\\)\\\\ ]{0,16})\\((?<characters>.*)\\)\\1\\\""

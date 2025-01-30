@@ -5,6 +5,8 @@
 
 QT_BEGIN_NAMESPACE
 
+using namespace Qt::Literals::StringLiterals;
+
 FileSignificanceCheck *FileSignificanceCheck::m_instance = nullptr;
 
 void FileSignificanceCheck::setRootDirectories(const QStringList &paths)
@@ -52,8 +54,7 @@ bool FileSignificanceCheck::isFileSignificant(const std::string &filePath) const
 
     for (const QDir &rootDir : m_rootDirs) {
         QString relativeFilePath = rootDir.relativeFilePath(file);
-        if (!relativeFilePath.startsWith(QLatin1String("../"))
-            && QFileInfo(relativeFilePath).isRelative()) {
+        if (!relativeFilePath.startsWith("../"_L1) && QFileInfo(relativeFilePath).isRelative()) {
             m_cache.insert({filePath, true});
             return true;
         }

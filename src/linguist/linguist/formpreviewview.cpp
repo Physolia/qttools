@@ -253,7 +253,7 @@ static void retranslateTargets(
             className, sourceText, QString::fromUtf8(tsv.qualifier())))
         text = msg->translation();
     if (text.isEmpty() && !tsv.value().isEmpty())
-        text = QLatin1Char('#') + sourceText;
+        text = u'#' + sourceText;
 
     for (const TranslatableEntry &target : targets)
         retranslateTarget(target, text);
