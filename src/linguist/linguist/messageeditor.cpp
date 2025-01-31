@@ -471,6 +471,8 @@ void MessageEditor::setTargetLanguage(int model)
         delete m_editors[model].transTexts.takeLast();
     m_editors[model].invariantForm = tr("Translation to %1").arg(langLocalized);
     m_editors[model].transCommentText->setLabel(tr("Translator comments for %1").arg(langLocalized));
+    m_editors[model].container->setToolTip(
+            QLocale::languageToString(m_dataModel->model(model)->language()));
 }
 
 MessageEditorData *MessageEditor::modelForWidget(const QObject *o)
