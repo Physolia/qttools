@@ -1935,12 +1935,9 @@ void MainWindow::setupMenuBar()
             this, &MainWindow::resetSorting);
     connect(m_ui.actionDisplayGuesses, &QAction::triggered,
             m_phraseView, &PhraseView::toggleGuessing);
-    connect(m_ui.actionStatistics, &QAction::triggered,
-            this, &MainWindow::toggleStatistics);
-    connect(m_ui.actionVisualizeWhitespace, &QAction::triggered,
-            this, &MainWindow::toggleVisualizeWhitespace);
-    connect(m_ui.menuView, &QMenu::aboutToShow,
-            this, &MainWindow::updateViewMenu);
+    connect(m_ui.actionStatistics, &QAction::triggered, this, &MainWindow::showStatistics);
+    connect(m_ui.actionVisualizeWhitespace, &QAction::triggered, this,
+            &MainWindow::toggleVisualizeWhitespace);
     connect(m_ui.actionIncreaseZoom, &QAction::triggered,
             m_messageEditor, &MessageEditor::increaseFontSize);
     connect(m_ui.actionDecreaseZoom, &QAction::triggered,
@@ -2119,12 +2116,6 @@ void MainWindow::editAboutToShow()
         }
         m_editActiveModel = m_currentIndex.model();
     }
-}
-
-void MainWindow::updateViewMenu()
-{
-    bool check = m_statistics ? m_statistics->isVisible() : false;
-    m_ui.actionStatistics->setChecked(check);
 }
 
 void MainWindow::showContextDock()
@@ -2732,20 +2723,14 @@ void MainWindow::recentFileActivated(QAction *action)
     openFiles(action->data().toStringList());
 }
 
-void MainWindow::toggleStatistics()
+void MainWindow::showStatistics()
 {
-    if (m_ui.actionStatistics->isChecked()) {
-        if (!m_statistics) {
-            m_statistics = new Statistics(this);
-            connect(m_dataModel, &MultiDataModel::statsChanged,
-                    m_statistics, &Statistics::updateStats);
-        }
-        m_statistics->show();
-        updateStatistics();
+    if (!m_statistics) {
+        m_statistics = new Statistics(this);
+        connect(m_dataModel, &MultiDataModel::statsChanged, m_statistics, &Statistics::updateStats);
     }
-    else if (m_statistics) {
-        m_statistics->close();
-    }
+    m_statistics->show();
+    updateStatistics();
 }
 
 void MainWindow::toggleVisualizeWhitespace()

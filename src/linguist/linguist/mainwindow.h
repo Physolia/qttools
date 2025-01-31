@@ -57,9 +57,6 @@ public:
     bool openFiles(const QStringList &names, bool readWrite = true);
     static QString friendlyString(const QString &str);
 
-public slots:
-    void updateViewMenu();
-
 protected:
     void readConfig();
     void writeConfig();
@@ -131,7 +128,7 @@ private slots:
     void findNext(const QString &text, DataModel::FindLocation where,
                   FindDialog::FindOptions options, int statusFilter);
     void revalidate();
-    void toggleStatistics();
+    void showStatistics();
     void toggleVisualizeWhitespace();
     void onWhatsThis();
     void updatePhraseDicts();
