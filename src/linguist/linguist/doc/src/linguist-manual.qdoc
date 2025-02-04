@@ -527,6 +527,9 @@
         \li \c {-nounfinished}
         \li Do not include unfinished translations.
     \row
+        \li \c {-fail-on-unfinished}
+        \li Generate an error if unfinished translations are found
+    \row
         \li \c {-removeidentical}
         \li If the translated text is the same as the source text, exclude the
             message.
@@ -542,6 +545,9 @@
     \row
         \li \c {-silent}
         \li Do not explain what is being done.
+    \row
+        \li \c {-verbose}
+        \li Explain what is being done (default).
     \row
         \li \c {-version}
         \li Display the version of \c lrelease and exit.

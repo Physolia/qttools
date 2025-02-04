@@ -107,6 +107,7 @@ public:
     void dropUiLines();
     void makeFileNamesAbsolute(const QDir &originalPath);
     bool translationsExist() const;
+    bool unfinishedTranslationsExist() const;
 
     using DuplicateEntries = QHash<int, QVector<int>>;
     struct Duplicates

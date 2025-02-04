@@ -58,6 +58,8 @@ Options:
            Compress the QM files
     -nounfinished
            Do not include unfinished translations
+    -fail-on-unfinished
+            Generate an error if unfinished translations are found
     -removeidentical
            If the translated text is the same as
            the source text, do not include the message
@@ -69,12 +71,14 @@ Options:
            Such a file may be generated from a .pro file using the lprodump tool.
     -silent
            Do not explain what is being done
+    -verbose
+           Explain what is being done (default)
     -version
            Display the version of lrelease and exit
 )"_s);
 }
 
-static bool loadTsFile(Translator &tor, const QString &tsFileName, bool /* verbose */)
+static bool loadTsFile(Translator &tor, const QString &tsFileName)
 {
     ConversionData cd;
     bool ok = tor.load(tsFileName, cd, "auto"_L1);
@@ -88,9 +92,15 @@ static bool loadTsFile(Translator &tor, const QString &tsFileName, bool /* verbo
     return ok;
 }
 
-static bool releaseTranslator(Translator &tor, const QString &qmFileName,
-    ConversionData &cd, bool removeIdentical)
+static bool releaseTranslator(Translator &tor, const QString &qmFileName, ConversionData &cd,
+                              bool removeIdentical, bool failOnUnfinished)
 {
+    if (failOnUnfinished && tor.unfinishedTranslationsExist()) {
+        printErr("lrelease error: cannot create '%1': existing unfinished translation(s) "
+                 "found (-fail-on-unfinished)"_L1.arg(qmFileName));
+        return false;
+    }
+
     tor.reportDuplicates(tor.resolveDuplicates(), qmFileName, cd.isVerbose());
 
     if (cd.isVerbose())
@@ -120,11 +130,11 @@ static bool releaseTranslator(Translator &tor, const QString &qmFileName,
     return ok;
 }
 
-static bool releaseTsFile(const QString& tsFileName,
-    ConversionData &cd, bool removeIdentical)
+static bool releaseTsFile(const QString &tsFileName, ConversionData &cd, bool removeIdentical,
+                          bool failOnUnfinished)
 {
     Translator tor;
-    if (!loadTsFile(tor, tsFileName, cd.isVerbose()))
+    if (!loadTsFile(tor, tsFileName))
         return false;
 
     QString qmFileName = tsFileName;
@@ -136,7 +146,7 @@ static bool releaseTsFile(const QString& tsFileName,
     }
     qmFileName += ".qm"_L1;
 
-    return releaseTranslator(tor, qmFileName, cd, removeIdentical);
+    return releaseTranslator(tor, qmFileName, cd, removeIdentical, failOnUnfinished);
 }
 
 static QStringList translationsFromProjects(const Projects &projects, bool topLevel);
@@ -169,6 +179,7 @@ int main(int argc, char **argv)
     ConversionData cd;
     cd.m_verbose = true; // the default is true starting with Qt 4.2
     bool removeIdentical = false;
+    bool failOnUnfinished = false;
     Translator tor;
     QStringList inputFiles;
     QString outputFile;
@@ -190,6 +201,9 @@ int main(int argc, char **argv)
             continue;
         } else if (!strcmp(arg, "-nounfinished")) {
             cd.m_ignoreUnfinished = true;
+            continue;
+        } else if (!strcmp(arg, "-fail-on-unfinished")) {
+            failOnUnfinished = true;
             continue;
         } else if (!strcmp(arg, "-markuntranslated")) {
             if (i == argc - 1) {
@@ -260,16 +274,16 @@ int main(int argc, char **argv)
 
     for (const QString &inputFile : std::as_const(inputFiles)) {
         if (outputFile.isEmpty()) {
-            if (!releaseTsFile(inputFile, cd, removeIdentical))
+            if (!releaseTsFile(inputFile, cd, removeIdentical, failOnUnfinished))
                 return 1;
         } else {
-            if (!loadTsFile(tor, inputFile, cd.isVerbose()))
+            if (!loadTsFile(tor, inputFile))
                 return 1;
         }
     }
 
     if (!outputFile.isEmpty())
-        return releaseTranslator(tor, outputFile, cd, removeIdentical) ? 0 : 1;
+        return releaseTranslator(tor, outputFile, cd, removeIdentical, failOnUnfinished) ? 0 : 1;
 
     return 0;
 }

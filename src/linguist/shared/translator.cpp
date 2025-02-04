@@ -434,11 +434,14 @@ void Translator::stripUntranslatedMessages()
 
 bool Translator::translationsExist() const
 {
-    for (const auto &message : m_messages) {
-        if (message.isTranslated())
-            return true;
-    }
-    return false;
+    return std::any_of(m_messages.cbegin(), m_messages.cend(),
+                       [](const auto &m) { return m.isTranslated(); });
+}
+
+bool Translator::unfinishedTranslationsExist() const
+{
+    return std::any_of(m_messages.cbegin(), m_messages.cend(),
+                       [](const auto &m) { return m.type() == TranslatorMessage::Unfinished; });
 }
 
 void Translator::stripEmptyContexts()
